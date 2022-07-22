@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from .insights import Insight
+from .insights import InsightResult
 
 
 class HeapMemory():
@@ -14,26 +14,27 @@ class HeapMemory():
 
     def __init__(self, size: int = 12):
         self.size: int = size
-        self.insights: List[Insight] = []
+        self.insights: List[InsightResult] = []
         self.counter: int = 0
 
-    def add(self, insights: Union[Insight, List[Insight]]) -> None:
+    def add(self, insights: Union[InsightResult, List[InsightResult]]) -> None:
         """Adds one or more insights to the heap memory.\n
         TODO: This needs a more efficient implementation by inserting the
         new insight directly at the right spot in the list.
         This way sorting could be avoided.
         """
-        if isinstance(insights, list):
-            self.insights = [*self.insights, *insights]
-            self.counter = self.counter + len(insights)
-        else:
-            self.insights = [*self.insights, insights]
-            self.counter = self.counter + 1
-        self.insights.sort()
-        self.insights.reverse()
-        self.insights = list(
-            filter(lambda x: x.score > 0, self.insights)
-            )[:self.size]
+        if insights:
+            if isinstance(insights, list):
+                self.insights = [*self.insights, *insights]
+                self.counter = self.counter + len(insights)
+            else:
+                self.insights = [*self.insights, insights]
+                self.counter = self.counter + 1
+            self.insights.sort()
+            self.insights.reverse()
+            self.insights = list(
+                filter(lambda x: x.score > 0, self.insights)
+                )[:self.size]
 
     @property
     def upper_bound(self) -> float:

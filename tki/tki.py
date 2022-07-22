@@ -8,7 +8,7 @@ import pandas as pd
 
 from .dimensions import Dimension
 from .extractors import Extractor
-from .aggregators import Aggregator
+from .aggregators import AggregationError, Aggregator
 from .insights import Insight, CompoundInsight
 from .spaces import Subspace, SiblingGroup
 from .compositeExtractor import CompositeExtractor
@@ -52,8 +52,13 @@ class TKI():
             dimension.name for dimension in self.dimensions]
         self.measurement_names = [
             measurement.name for measurement in self.measurements]
-        self.dataset = dataset
-        self.sums = self.dataset[self.measurement_names].sum()
+        self.dataset = pd.concat(
+            [dataset[self.dimension_names], dataset[self.measurement_names]],
+            axis=1, keys=['dimensions', 'measurements'])
+        self.sums = self.dataset['measurements'].sum()
+        for dimension in self.dimensions:
+            self.dataset['dimensions', dimension.name] = dimension.preprocess(
+                self.dataset['dimensions'][dimension.name])
 
     def run(self) -> None:
         try:
@@ -78,32 +83,41 @@ class TKI():
             signal.alarm(0)
 
     def _enumerate_insights(self, subspace: Subspace) -> None:
+        ## TODO:
+        ## Use multiprocessing to calculate scores.
+        ## Architecture:
+        ## Add results to Queue (maxsize=x) that is processed by y workers.
+        ## Use PriorityQueue to priorize high impact scores.
+        ## Immediatly discard impact scores < upper_bound.
+        ## Workers send InsightResults to another Queue.
+        ## Result Queue is processed by a Heap Memory worker.
+
         # Phase I
         max_impact = (subspace.sums / self.sums).max()
         for result in self._extract(subspace, compound=any(
-            issubclass(insight_type, CompoundInsight) 
+            issubclass(type(insight_type), CompoundInsight)
                 for insight_type in self.insight_types
         )):
             for insight_type in self.insight_types:
                 try:
-                    if issubclass(insight_type, CompoundInsight) and \
-                       isinstance(result['data'], pd.DataFrame):
-                        self.heap.add(insight_type(
-                            data=result['data'],
-                            dividing_dimension=result['sibling_group'].dividing_dimension,
-                            impact=result['impact'],
-                            sibling_group=result['sibling_group'],
-                            composite_extractor=result['composite_extractor']
-                        ))
-                    if not issubclass(insight_type, CompoundInsight) and \
-                       not isinstance(result['data'], pd.DataFrame):
-                        self.heap.add(insight_type(
-                            data=result['data'],
-                            dividing_dimension=result['sibling_group'].dividing_dimension,
-                            impact=result['impact'],
-                            sibling_group=result['sibling_group'],
-                            composite_extractor=result['composite_extractor']
-                        ))
+                    if result['data'].size > 1:
+                        if issubclass(type(insight_type), CompoundInsight) and \
+                            isinstance(result['data'], pd.DataFrame):
+                            self.heap.add(insight_type.calc_insight(
+                                data=result['data'],
+                                impact=result['impact'],
+                                sibling_group=result['sibling_group'],
+                                composite_extractor=result['composite_extractor']
+                            ))
+                    if result['data'].size > 3:
+                        if not issubclass(type(insight_type), CompoundInsight) and \
+                            not isinstance(result['data'], pd.DataFrame):
+                            self.heap.add(insight_type.calc_insight(
+                                data=result['data'],
+                                impact=result['impact'],
+                                sibling_group=result['sibling_group'],
+                                composite_extractor=result['composite_extractor']
+                            ))
                 except Exception as exc:
                     log.warning(exc)
                 if max_impact < self.heap.upper_bound:
@@ -142,73 +156,93 @@ class TKI():
                 dimension_pair[1] in dimension_pair[0].dependend_dimensions)):
                 log.debug('Skipping dependent Dimensions %s', dimension_pair)
                 continue
-            aggregator = aggregator_type(measurement)
-            extractions = self._recure_extract(
-                subspace, self.depth - 1, aggregator, dimension_pair)
-            for extraction in extractions:
-                if isinstance(extractions[0][0]['data'], pd.Series):
-                    for result in extraction:
-                        yield Result({
-                            **result,
-                            'impact': extractions[0][0]['data'].sum() /
-                                self.sums[result['composite_extractor']
-                                    .aggregator.measurement.name],
-                            'sibling_group': SiblingGroup(subspace, dimension_pair[0])
-                        })
-                else:
-                    for result in extraction:
-                        for loc, row in result['data'].iterrows():
-                            subspace.set(dimension_pair[1], loc)
+            try:
+                aggregator = aggregator_type(measurement)
+                extractions = self._recure_extract(
+                    subspace, self.depth - 1, aggregator, dimension_pair)
+                for extraction in extractions:
+                    if isinstance(extractions[0][0]['data'], pd.Series):
+                        for result in extraction:
                             yield Result({
                                 **result,
-                                'data': row,
-                                'impact': extractions[0][0]['data'].loc[loc].sum() /
-                                    self.sums[result['composite_extractor']
+                                'impact': (subspace.sums / self.sums)
+                                        [result['composite_extractor']
                                         .aggregator.measurement.name],
-                                'sibling_group': SiblingGroup(
-                                    deepcopy(subspace), dimension_pair[0]
-                                )
+                                'sibling_group': SiblingGroup(deepcopy(subspace),
+                                        dimension_pair[0])
                             })
-                        subspace.set(dimension_pair[1], '*')
-                        for loc, row in result['data'].T.iterrows():
-                            subspace.set(dimension_pair[0], loc)
-                            yield Result({
-                                **result,
-                                'data': row,
-                                'impact': extractions[0][0]['data'].T.loc[loc].sum() /
-                                    self.sums[result['composite_extractor']
-                                        .aggregator.measurement.name],
-                                'sibling_group': SiblingGroup(
-                                    deepcopy(subspace), dimension_pair[1]
-                                )
-                            })
-                        subspace.set(dimension_pair[0], '*')
-                        if compound:
-                            ## TODO: Combinations between '*' and subspace
-                            for comb in combinations(result['data'].index.values, 2):
+                    else:
+                        for result in extraction:
+                            for loc, row in result['data'].iterrows():
+                                subspace.set(dimension_pair[1], loc)
+                                subsubspace = Subspace(subspace.dataset,
+                                    deepcopy(subspace.dimensions), subspace.measurements)
+                                subspace.set(dimension_pair[1], '*')
                                 yield Result({
                                     **result,
-                                    'data': result['data'].loc[[comb[0], comb[1]]],
-                                    'impact': result['data']
-                                        .loc[[comb[0], comb[1]]].sum().sum() /
-                                            self.sums[result['composite_extractor']
-                                                .aggregator.measurement.name],
+                                    'data': row,
+                                    'impact': (subsubspace.sums / self.sums)
+                                        [result['composite_extractor']
+                                        .aggregator.measurement.name],
                                     'sibling_group': SiblingGroup(
-                                        deepcopy(subspace), dimension_pair[0]
+                                        subsubspace, dimension_pair[0]
                                     )
                                 })
-                            for comb in combinations(result['data'].columns.values, 2):
+                            for loc, row in result['data'].T.iterrows():
+                                subspace.set(dimension_pair[0], loc)
+                                subsubspace = Subspace(subspace.dataset,
+                                    deepcopy(subspace.dimensions), subspace.measurements)
+                                subspace.set(dimension_pair[0], '*')
                                 yield Result({
                                     **result,
-                                    'data': result['data'].T.loc[[comb[0], comb[1]]],
-                                    'impact': result['data']
-                                        .T.loc[[comb[0], comb[1]]].sum().sum() /
-                                            self.sums[result['composite_extractor']
-                                                .aggregator.measurement.name],
+                                    'data': row,
+                                    'impact': (subsubspace.sums / self.sums)
+                                        [result['composite_extractor']
+                                        .aggregator.measurement.name],
                                     'sibling_group': SiblingGroup(
-                                        deepcopy(subspace), dimension_pair[1]
+                                        subsubspace, dimension_pair[1]
                                     )
                                 })
+                            if compound:
+                                ## TODO: Combinations between '*' and subspace
+                                for comb in combinations(result['data'].index.values, 2):
+                                    subspace.set(dimension_pair[1], comb[0])
+                                    subsubspace1 = Subspace(subspace.dataset,
+                                        deepcopy(subspace.dimensions), subspace.measurements)
+                                    subspace.set(dimension_pair[1], comb[1])
+                                    subsubspace2 = Subspace(subspace.dataset,
+                                        deepcopy(subspace.dimensions), subspace.measurements)
+                                    subspace.set(dimension_pair[1], '*')
+                                    yield Result({
+                                        **result,
+                                        'data': result['data'].loc[[comb[0], comb[1]]],
+                                        'impact': ((subsubspace1.sums + subsubspace2.sums) /
+                                            self.sums)[result['composite_extractor']
+                                            .aggregator.measurement.name],
+                                        'sibling_group': SiblingGroup(
+                                            deepcopy(subspace), dimension_pair[0]
+                                        )
+                                    })
+                                for comb in combinations(result['data'].columns.values, 2):
+                                    subspace.set(dimension_pair[0], comb[0])
+                                    subsubspace1 = Subspace(subspace.dataset,
+                                        deepcopy(subspace.dimensions), subspace.measurements)
+                                    subspace.set(dimension_pair[0], comb[1])
+                                    subsubspace2 = Subspace(subspace.dataset,
+                                        deepcopy(subspace.dimensions), subspace.measurements)
+                                    subspace.set(dimension_pair[0], '*')
+                                    yield Result({
+                                        **result,
+                                        'data': result['data'].T.loc[[comb[0], comb[1]]],
+                                        'impact': ((subsubspace1.sums + subsubspace2.sums) /
+                                            self.sums)[result['composite_extractor']
+                                            .aggregator.measurement.name],
+                                        'sibling_group': SiblingGroup(
+                                            deepcopy(subspace), dimension_pair[1]
+                                        )
+                                    })
+            except AggregationError as err:
+                log.warning(err)
 
     def _recure_extract(self,
         subspace: Subspace,

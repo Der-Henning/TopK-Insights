@@ -1,23 +1,3 @@
-
-# Top-K Insights
-
-Pandas based Python package to extract Top-K Insights from multi-dimensional data
-
-The package contains an implementation of the article 'Extracting Top-K Insights from Multi-dimensional Data' (2017) by Tang, B., Han, S., Yiu, M.L., Ding, R. and Zhang, D. and their subsequent work.
-
-## Requirements
-
-- Python3.9+
-
-## Setup
-
-````
-python -m pip install git+https://github.com/Der-Henning/TopK-Insights
-````
-
-## Example
-
-````Python
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -72,9 +52,3 @@ for idx, i in enumerate(tki.heap.insights):
             {i.score:.2f} \n{(i.sibling_group, i.composite_extractor)}")
     plt.xticks(rotation=0)
 plt.savefig('insights.svg')
-
-````
-
-### Result
-
-![Insights](./insights.svg)

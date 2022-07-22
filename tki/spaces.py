@@ -17,26 +17,26 @@ class Subspace():
         self.dimensions = dimensions
         self.measurements = measurements
         self.dimension_names = [
-            dimension.name for dimension in self.dimensions 
+            dimension.name for dimension in self.dimensions
             if dimension.value == '*']
         self.measurement_names = [
             measurement.name for measurement in self.measurements]
         for dimension in self.dimensions:
             if dimension.value != '*':
-                self.dataset = self.dataset[self.dataset[dimension.name]
-                                            == dimension.value]
-        self.sums = self.dataset[self.measurement_names].sum()
+                self.dataset = self.dataset[
+                    self.dataset['dimensions', dimension.name] == dimension.value]
+        self.sums = self.dataset['measurements'].sum()
 
     def cube(self,
         aggregator: Aggregator,
         dimensions: List[Dimension]
     ) -> Union[pd.Series, pd.DataFrame]:
         cube = aggregator.agg(
-            self.dataset[[*[
-                dimension.name for dimension in dimensions],
-                *self.measurement_names]
-            ].groupby([dimension.name for dimension in dimensions])
+            self.dataset.groupby([
+                dimension.grouper for dimension in dimensions
+            ])
         )
+        cube.index.names = [name[1] for name in cube.index.names]
         if len(dimensions) > 1:
             return cube.unstack(dimensions[0].name)
         return cube
@@ -48,10 +48,10 @@ class Subspace():
                 break
 
     def values(self, dimension: Dimension) -> np.ndarray:
-        return self.dataset[dimension.name].unique()
+        return self.dataset['dimensions', dimension.name].unique()
 
     def __repr__(self) -> str:
-        return str(tuple((dim.value for dim in self.dimensions)))
+        return str(tuple((str(dim.value) for dim in self.dimensions)))
 
 
 class SiblingGroup():
