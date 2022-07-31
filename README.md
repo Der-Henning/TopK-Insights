@@ -7,11 +7,11 @@ The package contains an implementation of the article 'Extracting Top-K Insights
 
 ## Requirements
 
-- Python3.9+
+- Python3.8+
 
 ## Setup
 
-````
+````bash
 python -m pip install git+https://github.com/Der-Henning/TopK-Insights
 ````
 
@@ -22,10 +22,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from tki import TKI
-from tki.insights import OutstandingFirstInsight, OutstandingLastInsight, TrendInsight, EvennessInsight, CorrelationInsight
-from tki.extractors import RankExtractor, DeltaPrevExtractor, DeltaMeanExtractor, ProportionExtractor
+from tki.insights import OutstandingFirstInsight, OutstandingLastInsight, \
+    TrendInsight, EvennessInsight, CorrelationInsight
+from tki.extractors import RankExtractor, DeltaPrevExtractor, \
+    DeltaMeanExtractor, ProportionExtractor
 from tki.aggregators import SumAggregator
-from tki.dimensions import TemporalDimension, OrdinalDimension, NominalDimension
+from tki.dimensions import TemporalDimension, OrdinalDimension, \
+    NominalDimension
 
 data = [
     ['H', 2010, 40], ['T', 2010, 38], ['F', 2010, 13], ['B', 2010, 20],
@@ -44,7 +47,7 @@ extractors = {
 aggregators = {
     SumAggregator
 }
-insight_types = {
+insights = {
     OutstandingFirstInsight(),
     OutstandingLastInsight(),
     TrendInsight(),
@@ -57,8 +60,8 @@ tki = TKI(
     measurements=[OrdinalDimension('Cars Sold')],
     extractors=extractors,
     aggregators=aggregators,
-    insight_types=insight_types,
-    depth=2,
+    insights=insights,
+    depth=3,
     result_size=21)
 tki.run()
 
@@ -68,8 +71,9 @@ for idx, i in enumerate(tki.heap.insights):
     plt.axes(axes[int(idx/3)][idx % 3])
     i.plot()
     plt.title(
-        f"{type(i.insight).__name__} score: {i.impact:.2f} * {i.significance:.2f} = \
-            {i.score:.2f} \n{(i.sibling_group, i.composite_extractor)}")
+        f"{idx + 1}) {type(i.insight).__name__} "
+        f"score: {i.impact:.2f} * {i.significance:.2f} = {i.score:.2f}\n"
+        f"{(i.sibling_group, i.composite_extractor)}")
     plt.xticks(rotation=0)
 plt.savefig('insights.svg')
 

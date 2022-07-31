@@ -1,3 +1,4 @@
+"""Module containing the Insight classes"""
 from __future__ import annotations
 import math
 from functools import total_ordering, partial
@@ -8,29 +9,38 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-from .spaces import SiblingGroup
-from .compositeExtractor import CompositeExtractor
+from tki.composite_extractor import ExtractionResult
 
 
-def power_dist(x: np.ndarray, a: float, b: float) -> np.ndarray:
-    return a * np.power(x, -b)
+def power_dist(arr: np.ndarray, alpha: float, beta: float) -> np.ndarray:
+    """Power distribution"""
+    return alpha * np.power(arr, -beta)
 
 
 def power_dist_fix_beta(
-        b: float = 0.7) -> Callable[[np.ndarray, float], np.ndarray]:
-    return partial(power_dist, b=b)
+        beta: float = 0.7) -> Callable[[np.ndarray, float], np.ndarray]:
+    """Power distribution with fixed beta"""
+    return partial(power_dist, beta=beta)
 
 
-def linear_dist(x: np.ndarray, a: float, b: float) -> np.ndarray:
-    return a * x + b
+def linear_dist(arr: np.ndarray, alpha: float, beta: float) -> np.ndarray:
+    """Linear distribution"""
+    return alpha * arr + beta
 
 
-def quadratic_dist(x: np.ndarray, a: float, b: float) -> np.ndarray:
-    return a + b * np.power(x, 2)
+def quadratic_dist(arr: np.ndarray, alpha: float, beta: float) -> np.ndarray:
+    """Quadratic distribution"""
+    return alpha + beta * np.power(arr, 2)
 
 
-def cubic_dist(x: np.ndarray, a: float, b: float, c: float) -> np.ndarray:
-    return a + b * np.power(x, 2) + c * np.power(x, 3)
+def cubic_dist(arr: np.ndarray, alpha: float,
+               beta: float, gamma: float) -> np.ndarray:
+    """Cubic distribution"""
+    return alpha + beta * np.power(arr, 2) + gamma * np.power(arr, 3)
+
+
+class InsightError(Exception):
+    """Error calculation Insight"""
 
 
 @total_ordering
@@ -39,109 +49,112 @@ class InsightResult():
 
     Parameters
     ----------
+    extraction_result : ExtractionResult
+        Result of Data Extraction containing derived Data and origin
     data : pd.Series | pd.DataFrame
         Series or DataFrame (compound Insight) to calculate insights score for
     insight : Insight
         Insight Object containing type and configuration
-    impact : float
-        Impact factor to scale insight score between 0.0 and 1.0
     significance : float
         Significance measure between 0.0 and 1.0
-    sibling_group : SiblingGroup
-        Sibling Group Object describing the observed part of the data cube
-    composite_extractor : CompositeExtractor
-        Composite Extractor Object describing the used Extractors
-    details : dict
+    kwargs : dict
         Additional insight type specific information
     """
 
     def __init__(self,
+                 extraction_result: ExtractionResult,
                  data: Union[pd.Series, pd.DataFrame],
                  insight: Insight,
-                 impact: float = 0.0,
                  significance: float = 0.0,
-                 sibling_group: SiblingGroup = None,
-                 composite_extractor: CompositeExtractor = None,
-                 details: dict = None):
+                 **kwargs):
+        self.impact = extraction_result["impact"]
+        self.sibling_group = extraction_result["sibling_group"]
+        self.composite_extractor = extraction_result["composite_extractor"]
         self.data = data
         self.insight = insight
-        self.impact = impact
         self.significance = significance
-        self.sibling_group = sibling_group
-        self.composite_extractor = composite_extractor
-        self.details = details if details else {}
-        self.score = impact * significance
+        self.score = extraction_result["impact"] * significance
+        self.__dict__.update(kwargs)
 
     def __lt__(self, other: InsightResult) -> bool:
-        return (self.score < other.score)
+        return self.score < other.score
 
     def __eq__(self, other: InsightResult) -> bool:
-        return (self.score == other.score)
+        return self.score == other.score
 
     def __repr__(self) -> str:
         origin = (self.sibling_group, self.composite_extractor)
-        return f"{type(self.insight).__name__} - score: {self.score:.2f}, {origin}"
+        return (f"{type(self.insight).__name__} - "
+                f"score: {self.score:.2f}, {origin}")
 
     def plot(self) -> None:
-        """Visualizes the insight result using matplotlib
-        """
+        """Visualizes the insight result using matplotlib"""
         self.insight.plot(self)
 
 
 class Insight():
-    """Generic insight class for subclassing
+    """Parent class for Insights"""
 
-    Parameters
-    ----------
-    data : pd.Series | pd.DataFrame
-        Series/DataFrame to calculate insights score for
-    impact : float
-        Impact factor to scale insight score between 0.0 and 1.0
-    """
+    def calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+        """Calculate Insight score
 
-    def calc_insight(self,
-                     data: Union[pd.Series, pd.DataFrame],
-                     impact: float = 1.0,
-                     sibling_group: SiblingGroup = None,
-                     composite_extractor: CompositeExtractor = None
-                     ) -> Union[InsightResult, None]:
+        Arguments
+        ---------
+        extraction_result : ExtractionResult
+            Result of Data Extraction containing derived Data and origin
+
+        Raises
+        ------
+            InsightError
+
+        Returns
+        -------
+            InsightResult
+        """
         raise NotImplementedError
 
     def plot(self, result: InsightResult) -> None:
+        """Visualizes Insight Result using matplotlib
+
+        Arguments
+        ---------
+        result : InsightResult
+            Insight Result
+        """
         plt.xticks(
             range(result.data.index.size),
             result.data.index.get_level_values(
                 result.data.index.names[-1]),
-            rotation=90
-        )
+            rotation=90)
         plt.plot(result.data.values, label=result.sibling_group.subspace)
         plt.xlabel(result.data.index.names[-1])
-        plt.ylabel(result.composite_extractor.aggregator.measurement)
-        plt.title(f"{type(self).__name__} - score: {result.score:.2f}")
+        derived_measure = len(result.composite_extractor.extractors) > 0
+        plt.ylabel(
+            f"{'Derived measure ' if derived_measure else ''}"
+            f"{result.composite_extractor.aggregator.measurement}")
+        plt.title(
+            f"{type(self).__name__} - score: {result.score:.2f}\n"
+            f"{(result.sibling_group, result.composite_extractor)}")
         plt.legend()
 
 
 class PointInsight(Insight):
-    """Generic class for Point Insights
-    """
+    """Parent class for Point Insights"""
 
 
 class ShapeInsight(Insight):
-    """Generic class for Shape Insights
-    """
+    """Parent class for Shape Insights"""
 
 
 class CompoundInsight(Insight):
-    """Generic class for Compound Insights
-    """
+    """Parent class for Compound Insights"""
 
     def plot(self, result: InsightResult) -> None:
         plt.xticks(
             range(result.data.columns.size),
             result.data.columns.get_level_values(
                 result.data.columns.names[-1]),
-            rotation=90
-        )
+            rotation=90)
         for loc, row in result.data.iterrows():
             result.sibling_group.subspace.set(
                 result.sibling_group.dividing_dimension, loc)
@@ -156,35 +169,39 @@ class CompoundInsight(Insight):
 
 class OutstandingFirstInsight(PointInsight):
     """By predicting a given distribution for the values sorted descending
-    this insight calculates the likelyhood of the first (highest) value
+    this insight calculates the likelihood of the first (highest) value
     given the later.\n
     The score is calculated by multiplying the impact factor with the
     p-value.
+
+    Parameters
+    ----------
+    distribution_law : fn(np.ndarray, ...) -> np.ndarray
+        Funktion describing a distribution to fit the data
+        Defaults to power_dist_fix_beta(0.7)
+    stat_distribution : scipy.stats.rv_continuous
+        Statistic distribution to describe the distribution of residuals
+        Defaults to scipy.stats.norm
     """
 
     def __init__(self,
-                 dist_law: Callable[..., np.ndarray] = power_dist_fix_beta(0.7),
+                 distribution_law: Callable[..., np.ndarray]
+                    = power_dist_fix_beta(0.7),
                  stat_distribution: rv_continuous = norm):
-        self.dist_law = dist_law
+        self.dist_law = distribution_law
         self.stat_dist = stat_distribution
 
-    def calc_insight(self,
-                     data: pd.Series,
-                     impact: float = 1.0,
-                     sibling_group: SiblingGroup = None,
-                     composite_extractor: CompositeExtractor = None
-                     ) -> Union[InsightResult, None]:
-
+    def calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
         # Sort values descending
-        data = data.sort_values(ascending=False)
+        data = extraction_result["data"].sort_values(ascending=False)
         ydata = data.values
         xdata = range(1, ydata.size + 1)
 
         # Linear distributions lead to a perfect fit and a high score
-        # Insight is meaningless -> return None
+        # Insight is meaningless -> raise InsightError
         if (np.unique(np.diff(ydata)).size == 1) or \
                 (not np.all(np.isfinite(ydata))):
-            return None
+            raise InsightError("OutstandingFirstInsight: Linear data")
 
         # move all values so that the minimum is 0
         offset = np.min(ydata)
@@ -194,8 +211,7 @@ class OutstandingFirstInsight(PointInsight):
         law_params, _ = curve_fit(
             self.dist_law,
             xdata[1:], ydata[1:] - offset,
-            maxfev=5000
-        )
+            maxfev=5000)
         prediction = self.dist_law(xdata, *law_params) + offset
 
         # Calculate residuals
@@ -211,50 +227,49 @@ class OutstandingFirstInsight(PointInsight):
 
         # return Insight Result object
         return InsightResult(
+            extraction_result=extraction_result,
             data=data,
             insight=self,
-            impact=impact,
             significance=1 - p_value,
-            sibling_group=sibling_group,
-            composite_extractor=composite_extractor,
-            details={
-                'p_value': p_value,
-                'law_params': law_params,
-                'dist_params': dist_params,
-                'residuals': residuals,
-                'prediction': prediction
-            }
-        )
+            p_value=p_value,
+            law_params=law_params,
+            dist_params=dist_params,
+            residuals=residuals,
+            prediction=prediction)
 
     def plot(self, result: InsightResult) -> None:
         super().plot(result)
-        plt.plot(result.details["prediction"],
-                 label="null hypothesis")
+        plt.plot(result.prediction, label="null hypothesis")
         plt.legend()
 
 
 class OutstandingLastInsight(PointInsight):
     """By predicting a given distribution for the values sorted descending
-    this insight calculates the likelyhood of the last (lowest) value
+    this insight calculates the likelihood of the last (lowest) value
     given the later.\n
     The score is calculated by multiplying the impact factor with the
     p-value.
+
+    Parameters
+    ----------
+    distribution_law : fn(np.ndarray, ...) -> np.ndarray
+        Funktion describing a distribution to fit the data
+        Defaults to power_dist_fix_beta(0.7)
+    stat_distribution : scipy.stats.rv_continuous
+        Statistic distribution to describe the distribution of residuals
+        Defaults to scipy.stats.norm
     """
 
     def __init__(self,
-                 dist_law: Callable[..., np.ndarray] = power_dist_fix_beta(0.7),
+                 distribution_law: Callable[..., np.ndarray]
+                 = power_dist_fix_beta(0.7),
                  stat_distribution: rv_continuous = norm):
-        self.dist_law = dist_law
+        self.dist_law = distribution_law
         self.stat_dist = stat_distribution
 
-    def calc_insight(self,
-                     data: pd.Series,
-                     impact: float = 1.0,
-                     sibling_group: SiblingGroup = None,
-                     composite_extractor: CompositeExtractor = None
-                     ) -> Union[InsightResult, None]:
+    def calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
         # Sort values descending
-        data = data.sort_values(ascending=False)
+        data = extraction_result["data"].sort_values(ascending=False)
         ydata = data.values
         xdata = range(1, ydata.size + 1)
 
@@ -262,7 +277,7 @@ class OutstandingLastInsight(PointInsight):
         # Insight is meaningless -> return None
         if (np.unique(np.diff(ydata)).size == 1) or \
                 (not np.all(np.isfinite(ydata))):
-            return None
+            raise InsightError("OutstandingLastInsight: Linear data")
 
         # move all values so that the minimum is 0
         offset = np.min(ydata)
@@ -272,8 +287,7 @@ class OutstandingLastInsight(PointInsight):
         law_params, _ = curve_fit(
             self.dist_law,
             xdata[:-1], ydata[:-1] - offset,
-            maxfev=5000
-        )
+            maxfev=5000)
         prediction = self.dist_law(xdata, *law_params) + offset
 
         # Calculate residuals
@@ -289,25 +303,19 @@ class OutstandingLastInsight(PointInsight):
 
         # return Insight Result object
         return InsightResult(
+            extraction_result=extraction_result,
             data=data,
             insight=self,
-            impact=impact,
             significance=1 - p_value,
-            sibling_group=sibling_group,
-            composite_extractor=composite_extractor,
-            details={
-                'p_value': p_value,
-                'law_params': law_params,
-                'dist_params': dist_params,
-                'residuals': residuals,
-                'prediction': prediction
-            }
-        )
+            p_value=p_value,
+            law_params=law_params,
+            dist_params=dist_params,
+            residuals=residuals,
+            prediction=prediction)
 
     def plot(self, result: InsightResult) -> None:
         super().plot(result)
-        plt.plot(result.details["prediction"],
-                 label="null hypothesis")
+        plt.plot(result.prediction, label="null hypothesis")
         plt.legend()
 
 
@@ -318,21 +326,22 @@ class EvennessInsight(PointInsight):
     even distribution.
     """
 
-    def calc_insight(self,
-                     data: pd.Series,
-                     impact: float = 1.0,
-                     sibling_group: SiblingGroup = None,
-                     composite_extractor: CompositeExtractor = None
-                     ) -> Union[InsightResult, None]:
+    def calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+        data = extraction_result["data"]
 
         # Insight is meaningless if there are any NaN or Inf values
-        # -> return None
+        # -> raise InsightError
         if not np.all(np.isfinite(data.values)):
-            return None
+            raise InsightError("EvennessInsight: data not finite")
 
         # The Shannon-Index only works only for values greater or equal to zero.
         if np.any(data.values < 0):
-            return None
+            raise InsightError("EvennessInsight: data contains values < 0")
+
+        # Prevent dividing by zero
+        sum = np.sum(data.values)
+        if sum == 0:
+            raise InsightError("EvennessInsight: Sum of values is zero")
 
         # Calculate the Shannon-Index
         p = data.values / np.sum(data.values)
@@ -354,18 +363,13 @@ class EvennessInsight(PointInsight):
 
         # return Insight Result object
         return InsightResult(
+            extraction_result=extraction_result,
             data=data,
             insight=self,
-            impact=impact,
             significance=significance,
-            sibling_group=sibling_group,
-            composite_extractor=composite_extractor,
-            details={
-                'shannon_index': shannon,
-                'test_statistic': test,
-                'p_value': p_value
-            }
-        )
+            shannon_index=shannon,
+            test_statistic=test,
+            p_value=p_value)
 
     def plot(self, result: InsightResult) -> None:
         super().plot(result)
@@ -379,6 +383,7 @@ class TrendInsight(ShapeInsight):
 
     TODO: Use and compare the Results using the p-value provided by
     scipy.stats.linregress
+    I would prefer using the scipy implementation
 
     Parameters
     ----------
@@ -388,9 +393,9 @@ class TrendInsight(ShapeInsight):
     slope_mean : float
         Position of the distribution of slopes
         Defaults to 0.0
-    slope_str : float
+    slope_std : float
         Standard derivation of the distribution of slopes
-        Defaults to 1.0
+        Defaults to 0.2
     """
 
     def __init__(self,
@@ -400,20 +405,17 @@ class TrendInsight(ShapeInsight):
         self.stat_dist = stat_distribution
         self.dist_params = {'loc': slope_mean, 'scale': slope_std}
 
-    def calc_insight(self,
-                     data: pd.Series,
-                     impact: float = 1.0,
-                     sibling_group: SiblingGroup = None,
-                     composite_extractor: CompositeExtractor = None
-                     ) -> Union[InsightResult, None]:
+    def calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+        data = extraction_result["data"]
 
         # All values must be real
         if not np.isfinite(data.values).all():
-            return None
+            raise InsightError("TrendInsight: data not finite")
 
         # TrendInsight only viable for time based data
-        if sibling_group and not sibling_group.dividing_dimension.is_temporal:
-            return None
+        if extraction_result["sibling_group"] and \
+            not extraction_result["sibling_group"].dividing_dimension.is_temporal:
+            raise InsightError("TrendInsight: dimension is not temporal")
 
         # Scaling factor for normalization
         scale = (np.max(data.values) - np.min(data.values)) / data.values.size
@@ -421,8 +423,7 @@ class TrendInsight(ShapeInsight):
         # Fit linear regression on the data
         result = linregress(
             x=range(data.values.size),
-            y=data.values if scale == 0 else data.values / scale
-        )
+            y=data.values if scale == 0 else data.values / scale)
         slope = result.slope * scale
         intercept = result.intercept * scale
         r_value = result.rvalue
@@ -430,32 +431,27 @@ class TrendInsight(ShapeInsight):
         # Calculate the p-value for the slope on the given distribution
         # A higher slope than assumed creates a higher significance score.
         p_value = self.stat_dist.sf(
-            abs(slope), **self.dist_params
-        )
+            abs(slope), **self.dist_params)
+
         # rvalue**2 is a measurement for the precision of the linear regression.
         # It is used to scale the final score.
         significance = (1 - p_value) * r_value**2
 
         # return Insight Result object
         return InsightResult(
+            extraction_result=extraction_result,
             data=data,
             insight=self,
-            impact=impact,
             significance=significance,
-            sibling_group=sibling_group,
-            composite_extractor=composite_extractor,
-            details={
-                'p_value': p_value,
-                'r_value': r_value,
-                'slope': slope,
-                'intercept': intercept
-            }
-        )
+            p_value=p_value,
+            r_value=r_value,
+            slope=slope,
+            intercept=intercept)
 
     def plot(self, result: InsightResult) -> None:
         super().plot(result)
         x_data = np.arange(result.data.values.size)
-        y_data = result.details["intercept"] + x_data * result.details["slope"]
+        y_data = result.intercept + x_data * result.slope
         plt.plot(y_data, label="regression")
         plt.legend()
 
@@ -467,44 +463,38 @@ class CorrelationInsight(CompoundInsight):
     scipy.stats.pearsonr is used.
     """
 
-    def calc_insight(self,
-                     data: pd.Series,
-                     impact: float = 1.0,
-                     sibling_group: SiblingGroup = None,
-                     composite_extractor: CompositeExtractor = None
-                     ) -> Union[InsightResult, None]:
+    def calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+        data = extraction_result["data"]
 
         # CorrelationInsight only viable for ordinal data
-        if sibling_group and not sibling_group.dividing_dimension.is_ordinal:
-            return None
+        if extraction_result["sibling_group"] and \
+            not extraction_result["sibling_group"].dividing_dimension.is_ordinal:
+            raise InsightError(
+                "CorrelationInsight: dividing dimension is not ordinal")
 
         # If an input array is constant the correlation coefficient is not defined.
-        # -> return None
+        # -> raise InsightError
         if (data.iloc[0] == data.iloc[0].iloc[0]).all() or \
                 (data.iloc[1] == data.iloc[1].iloc[0]).all():
-            return None
+            raise InsightError("CorrelationInsight: constant input array")
         if not np.isfinite(data.iloc[0]).all() or \
                 not np.isfinite(data.iloc[1]).all():
-            return None
+            raise InsightError("CorrelationInsight: data is not finite")
+
+        # Sort by column labels
+        data.sort_index(axis=1, inplace=True)
 
         # Calculate correlation and p-value
-        r_value, p_value = pearsonr(
-            data.iloc[0], data.iloc[1]
-        )
+        r_value, p_value = pearsonr(data.iloc[0], data.iloc[1])
 
         # Calculate significance
         significance = 1 - p_value
 
         # return Insight Result object
         return InsightResult(
+            extraction_result=extraction_result,
             data=data,
             insight=self,
-            impact=impact,
             significance=significance,
-            sibling_group=sibling_group,
-            composite_extractor=composite_extractor,
-            details={
-                'p_value': p_value,
-                'r_value': r_value
-            }
-        )
+            p_value=p_value,
+            r_value=r_value)
