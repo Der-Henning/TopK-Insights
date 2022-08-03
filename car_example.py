@@ -7,8 +7,7 @@ from tki.insights import OutstandingFirstInsight, OutstandingLastInsight, \
 from tki.extractors import RankExtractor, DeltaPrevExtractor, \
     DeltaMeanExtractor, ProportionExtractor
 from tki.aggregators import SumAggregator
-from tki.dimensions import TemporalDimension, OrdinalDimension, \
-    NominalDimension
+from tki.dimensions import CardinalDimension, TemporalDimension, NominalDimension
 
 data = [
     ['H', 2010, 40], ['T', 2010, 38], ['F', 2010, 13], ['B', 2010, 20],
@@ -37,7 +36,7 @@ insights = {
 tki = TKI(
     pd.DataFrame(data, columns=['Brand', 'year', 'Cars Sold']),
     dimensions=[NominalDimension('Brand'), TemporalDimension('year')],
-    measurements=[OrdinalDimension('Cars Sold')],
+    measurements=[CardinalDimension('Cars Sold')],
     extractors=extractors,
     aggregators=aggregators,
     insights=insights,
