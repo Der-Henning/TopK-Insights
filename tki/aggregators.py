@@ -28,7 +28,7 @@ class Aggregator(metaclass=MetaAggregator):
         self.measurement = measurement
 
     def agg(self, group: pd.core.groupby.DataFrameGroupBy) -> pd.DataFrame:
-        """Applys aggregation function to a grouped DataFrame.
+        """Applies aggregation function to a grouped DataFrame.
 
         Arguments
         ---------

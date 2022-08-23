@@ -11,7 +11,7 @@ class Dimension():
     ----------
     name : str
         Name of column in Dataset
-    dependent_dimensions : List[Dimension]
+    dependent_dimensions : List[str]
         List of dependent dimensions. e.g. Country -> Region
     value : str
         Current value reducing the Subspace.
@@ -24,7 +24,7 @@ class Dimension():
 
     def __init__(self,
                  name: str,
-                 dependent_dimensions: List[Dimension] = None,
+                 dependent_dimensions: List[str] = None,
                  value: str = '*'):
         self.name = name
         self.dependent_dimensions = \
@@ -64,7 +64,7 @@ class NominalDimension(Dimension):
     ----------
     name : str
         Name of column in Dataset
-    dependent_dimensions : List[Dimension]
+    dependent_dimensions : List[str]
         List of dependent dimensions. e.g. Country -> Region
     value : str
         Current value reducing the Subspace.
@@ -80,7 +80,7 @@ class OrdinalDimension(NominalDimension):
     ----------
     name : str
         Name of column in Dataset
-    dependent_dimensions : List[Dimension]
+    dependent_dimensions : List[str]
         List of dependent dimensions. e.g. Country -> Region
     value : str
         Current value reducing the Subspace.
@@ -96,7 +96,7 @@ class CardinalDimension(OrdinalDimension):
     ----------
     name : str
         Name of column in Dataset
-    dependent_dimensions : List[Dimension]
+    dependent_dimensions : List[str]
         List of dependent dimensions. e.g. Country -> Region
     value : str
         Current value reducing the Subspace.
@@ -109,7 +109,7 @@ class CardinalDimension(OrdinalDimension):
 
     def __init__(self,
                  name: str,
-                 dependent_dimensions: List[Dimension] = None,
+                 dependent_dimensions: List[str] = None,
                  value: str = '*',
                  bins: int = 10):
         super().__init__(name, dependent_dimensions, value)
@@ -128,7 +128,7 @@ class TemporalDimension(CardinalDimension):
     ----------
     name : str
         Name of column in Dataset
-    dependent_dimensions : List[Dimension]
+    dependent_dimensions : List[str]
         List of dependent dimensions. e.g. Country -> Region
     value : str
         Current value reducing the Subspace.
@@ -147,7 +147,7 @@ class TemporalDimension(CardinalDimension):
 
     def __init__(self,
                  name: str,
-                 dependent_dimensions: List[Dimension] = None,
+                 dependent_dimensions: List[str] = None,
                  value: str = '*',
                  bins: int = 0,
                  date_format: 'str' = None,
@@ -157,8 +157,8 @@ class TemporalDimension(CardinalDimension):
         self.freq = freq
 
     def preprocess(self, data: pd.Series) -> pd.Series:
-        if not self.date_format:
-            return super().preprocess(data)
+        # if not self.date_format:
+        #     return super().preprocess(data)
         return super().preprocess(
             pd.to_datetime(data, format=self.date_format))
 

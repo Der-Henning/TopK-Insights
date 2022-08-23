@@ -197,8 +197,8 @@ class TKI():
 
             # block dependent dimensions
             if (len(dimension_pair) > 1 and
-               (dimension_pair[0] in dimension_pair[1].dependent_dimensions or
-                dimension_pair[1] in dimension_pair[0].dependent_dimensions)):
+               (dimension_pair[0].name in dimension_pair[1].dependent_dimensions or
+                dimension_pair[1].name in dimension_pair[0].dependent_dimensions)):
                 log.debug('Skipping dependent Dimensions %s', dimension_pair)
                 continue
             try:

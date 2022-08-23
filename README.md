@@ -27,8 +27,7 @@ from tki.insights import OutstandingFirstInsight, OutstandingLastInsight, \
 from tki.extractors import RankExtractor, DeltaPrevExtractor, \
     DeltaMeanExtractor, ProportionExtractor
 from tki.aggregators import SumAggregator
-from tki.dimensions import TemporalDimension, OrdinalDimension, \
-    NominalDimension
+from tki.dimensions import CardinalDimension, TemporalDimension, NominalDimension
 
 data = [
     ['H', 2010, 40], ['T', 2010, 38], ['F', 2010, 13], ['B', 2010, 20],
@@ -56,8 +55,10 @@ insights = {
 }
 tki = TKI(
     pd.DataFrame(data, columns=['Brand', 'year', 'Cars Sold']),
-    dimensions=[NominalDimension('Brand'), TemporalDimension('year')],
-    measurements=[OrdinalDimension('Cars Sold')],
+    dimensions=[
+        NominalDimension('Brand'),
+        TemporalDimension('year', date_format='%Y', freq='1Y')],
+    measurements=[CardinalDimension('Cars Sold')],
     extractors=extractors,
     aggregators=aggregators,
     insights=insights,
@@ -65,8 +66,7 @@ tki = TKI(
     result_size=21)
 tki.run()
 
-_, axes = plt.subplots(7, 3, figsize=(25, 40), dpi=80)
-plt.subplots_adjust(hspace=0.3)
+fig, axes = plt.subplots(7, 3, figsize=(25, 40), dpi=80)
 for idx, i in enumerate(tki.heap.insights):
     plt.axes(axes[int(idx/3)][idx % 3])
     i.plot()
@@ -74,11 +74,31 @@ for idx, i in enumerate(tki.heap.insights):
         f"{idx + 1}) {type(i.insight).__name__} "
         f"score: {i.impact:.2f} * {i.significance:.2f} = {i.score:.2f}\n"
         f"{(i.sibling_group, i.composite_extractor)}")
+    x_index = i.data.index.get_level_values(i.data.index.names[-1])
     plt.xticks(rotation=0)
+    if isinstance(x_index, pd.DatetimeIndex):
+        plt.xticks(
+            range(i.data.index.size),
+            x_index.to_series().dt.year)
+fig.tight_layout()
 plt.savefig('insights.svg')
-
+tki.save('insights.pkl')
 ````
 
 ### Result
 
 ![Insights](./insights.svg)
+
+
+## Web Application
+
+The web application will provide a convenient interface for the tki package in the future.
+At the moment it is possible to visualize saved insights in the browser.
+Start the server with
+
+````
+python -m tki.app
+````
+
+The project will be accessible via `http://127.0.0.1:8050/` in your web browser.
+To display your previously generated results open the `Result` tab and upload your `insights.pkl` file.

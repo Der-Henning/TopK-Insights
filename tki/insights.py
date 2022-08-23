@@ -5,6 +5,7 @@ from functools import total_ordering, partial
 from typing import Union, Callable
 from scipy.stats import rv_continuous, norm, logistic, t, linregress, pearsonr
 from scipy.optimize import curve_fit
+import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -91,6 +92,12 @@ class InsightResult():
         """Visualizes the insight result using matplotlib"""
         self.insight.plot(self)
 
+    @property
+    def fig(self) -> go.Figure:
+        """Returns a plotly.graph_objects.Figure containing
+        a visualization of the Insight Result"""
+        return self.insight.fig(self)
+
 
 class Insight():
     """Parent class for Insights"""
@@ -137,6 +144,39 @@ class Insight():
             f"{(result.sibling_group, result.composite_extractor)}")
         plt.legend()
 
+    def fig(self, result: InsightResult) -> go.Figure:
+        """Creates a Visualization of the Insight Result
+
+        Arguments
+        ---------
+        result : InsightResult
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+        """
+        derived_measure = len(result.composite_extractor.extractors) > 0
+        fig = go.Figure(
+            layout=go.Layout(
+                xaxis = {
+                    'tickmode': 'array',
+                    'tickvals': list(range(1, len(result.data.values) + 1)),
+                    'ticktext': result.data.index.get_level_values(
+                        result.data.index.names[-1]),
+                    'title': result.data.index.names[-1]},
+                yaxis = {
+                    'title': f"{'Derived measure ' if derived_measure else ''}"
+                        f"{result.composite_extractor.aggregator.measurement}"},
+                legend={
+                    'orientation': "h",
+                    'yanchor': "bottom", 'y': 1.02,
+                    'xanchor': "right", 'x': 1 } ))
+        fig.add_trace(go.Scatter(
+            name=str(result.sibling_group.subspace),
+            x=list(range(1, len(result.data.values) + 1)),
+            y=result.data.values, showlegend=True))
+        return fig
+
 
 class PointInsight(Insight):
     """Parent class for Point Insights"""
@@ -165,6 +205,34 @@ class CompoundInsight(Insight):
         plt.ylabel(result.composite_extractor.aggregator.measurement.name)
         plt.title(f"{type(self).__name__} - score: {result.score:.2f}")
         plt.legend()
+
+    def fig(self, result: InsightResult) -> go.Figure:
+        derived_measure = len(result.composite_extractor.extractors) > 0
+        x_data = list(range(1, result.data.columns.size + 1))
+        fig = go.Figure(
+            layout=go.Layout(
+                xaxis = {
+                    'tickmode': 'array',
+                    'tickvals': x_data,
+                    'ticktext': result.data.columns.get_level_values(
+                        result.data.columns.names[-1]),
+                    'title': result.data.columns.names[-1]},
+                yaxis = {
+                    'title': f"{'Derived measure ' if derived_measure else ''}"
+                        f"{result.composite_extractor.aggregator.measurement}"},
+                legend={
+                    'orientation': "h",
+                    'yanchor': "bottom", 'y': 1.02,
+                    'xanchor': "right", 'x': 1} ))
+        for loc, row in result.data.iterrows():
+            result.sibling_group.subspace.set(
+                result.sibling_group.dividing_dimension, loc)
+            fig.add_trace(go.Scatter(
+                name=str(result.sibling_group.subspace),
+                x=x_data, y=row.values))
+        result.sibling_group.subspace.set(
+            result.sibling_group.dividing_dimension, '*')
+        return fig
 
 
 class OutstandingFirstInsight(PointInsight):
@@ -218,6 +286,11 @@ class OutstandingFirstInsight(PointInsight):
         residuals = ydata - prediction
 
         # Fit location parameters of the distribution of residuals
+        # TODO:
+        # scipy >= 1.9.0 provides a new fit function
+        # scipy.stats.fit(dist, data) -> FitResult function
+        # Resulting params don't make sence though...
+        # fitResult = stats.fit(self.stat_dist, residuals[1:])
         loc, scale = self.stat_dist.fit(residuals[1:])
         dist_params = {'loc': loc, 'scale': scale}
 
@@ -241,6 +314,15 @@ class OutstandingFirstInsight(PointInsight):
         super().plot(result)
         plt.plot(result.prediction, label="null hypothesis")
         plt.legend()
+
+    def fig(self, result: InsightResult) -> go.Figure:
+        fig = super().fig(result)
+        fig.add_trace(go.Scatter(
+            name="Null-Hypothesis",
+            x=list(range(1, len(result.data.values) + 1)),
+            y=result.prediction,
+            mode="lines", line={'color': "orange"}))
+        return fig
 
 
 class OutstandingLastInsight(PointInsight):
@@ -272,6 +354,12 @@ class OutstandingLastInsight(PointInsight):
         data = extraction_result["data"].sort_values(ascending=False)
         ydata = data.values
         xdata = range(1, ydata.size + 1)
+
+        diff = data.diff()
+        if diff.sum() == 0:
+            raise InsightError("OutstandingLastInsight: No variance")
+        if diff[-1] / diff.sum() < 1 / data.size:
+            raise InsightError("OutstandingLastInsight: Too low variance on tail")
 
         # Linear distributions lead to a perfect fit and a high score
         # Insight is meaningless -> return None
@@ -318,6 +406,15 @@ class OutstandingLastInsight(PointInsight):
         plt.plot(result.prediction, label="null hypothesis")
         plt.legend()
 
+    def fig(self, result: InsightResult) -> go.Figure:
+        fig = super().fig(result)
+        fig.add_trace(go.Scatter(
+            name="Null-Hypothesis",
+            x=list(range(1, len(result.data.values) + 1)),
+            y=result.prediction,
+            mode="lines", line={'color': "orange"}))
+        return fig
+
 
 class EvennessInsight(PointInsight):
     """The Evenness Insight returns a score describing the evenness of
@@ -339,12 +436,12 @@ class EvennessInsight(PointInsight):
             raise InsightError("EvennessInsight: data contains values < 0")
 
         # Prevent dividing by zero
-        sum = np.sum(data.values)
-        if sum == 0:
+        data_sum = np.sum(data.values)
+        if data_sum == 0:
             raise InsightError("EvennessInsight: Sum of values is zero")
 
         # Calculate the Shannon-Index
-        p = data.values / np.sum(data.values)
+        p = data.values / data_sum
         shannon = -np.sum(p * np.log(p, out=np.zeros_like(p),
                                      where=(p != 0))) / np.log(data.size)
 
@@ -417,15 +514,12 @@ class TrendInsight(ShapeInsight):
             not extraction_result["sibling_group"].dividing_dimension.is_temporal:
             raise InsightError("TrendInsight: dimension is not temporal")
 
-        # Scaling factor for normalization
-        scale = (np.max(data.values) - np.min(data.values)) / data.values.size
-
         # Fit linear regression on the data
         result = linregress(
             x=range(data.values.size),
-            y=data.values if scale == 0 else data.values / scale)
-        slope = result.slope * scale
-        intercept = result.intercept * scale
+            y=data.values)
+        slope = result.slope
+        intercept = result.intercept
         r_value = result.rvalue
 
         # Calculate the p-value for the slope on the given distribution
@@ -454,6 +548,15 @@ class TrendInsight(ShapeInsight):
         y_data = result.intercept + x_data * result.slope
         plt.plot(y_data, label="regression")
         plt.legend()
+
+    def fig(self, result: InsightResult) -> go.Figure:
+        fig = super().fig(result)
+        x_data = np.arange(1, len(result.data.values) + 1)
+        fig.add_trace(go.Scatter(
+            name="regression", x=x_data,
+            y=result.intercept + (x_data - 1) * result.slope,
+            mode="lines", line={'color': "orange"}))
+        return fig
 
 
 class CorrelationInsight(CompoundInsight):

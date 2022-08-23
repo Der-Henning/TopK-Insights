@@ -27,7 +27,7 @@ setup(
     packages=['tki'],
     include_package_data=True,
     python_requires=">=3.8.*",
-    install_requires=['numpy', 'pandas', 'scipy', 'matplotlib'],
+    install_requires=['numpy', 'pandas', 'scipy', 'matplotlib', 'dash'],
     license=about['__license__'],
     zip_safe=False,
     keywords='insights'
