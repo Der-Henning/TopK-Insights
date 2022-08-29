@@ -101,10 +101,11 @@ class RankExtractor(Extractor):
     """
     name = 'Rank'
 
-    def is_valid(self, subspace: Subspace, prev_extractor: Extractor = None) -> bool:
+    def is_valid(self, subspace: Subspace, prev_extractor: Extractor = None
+        ) -> bool:
         return super().is_valid(subspace, prev_extractor) and \
-            not (isinstance(prev_extractor, (DeltaMeanExtractor, ProportionExtractor)) and
-            prev_extractor.dimension == self.dimension)
+            not (isinstance(prev_extractor, (DeltaMeanExtractor, ProportionExtractor))
+            and prev_extractor.dimension == self.dimension)
 
     def extract(self, cube: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
         if cube.empty:

@@ -33,14 +33,15 @@ class Subspace():
 
     @cached_property
     def sums(self) -> pd.DataFrame:
-        """Measurement Sums for the current Data Set"""
-        return self.dataset['measurements'].sum()
+        """Measurement absolute Sums for the current Data Set"""
+        return self.dataset['measurements'].abs().sum()
 
     @cached_property
     def dataset(self) -> pd.DataFrame:
         """Filtered Data Set"""
-        dim_filter = [(self._dataset['dimensions', dimension.name] == dimension.value)
-                      for dimension in self.dimensions if dimension.value != '*']
+        dim_filter = [
+            (self._dataset['dimensions', dimension.name] == dimension.value)
+                for dimension in self.dimensions if dimension.value != '*']
         if len(dim_filter) > 0:
             return self._dataset[np.logical_and.reduce(dim_filter)]
         return self._dataset
@@ -73,7 +74,9 @@ class Subspace():
         return cube
 
     def set(self, dimension: Dimension, value: Any) -> None:
-        """Set value of a dimension.
+        """Set value of a dimension.\n
+        CAUTION: Does not update dataset and sums.\n
+        To update use `del subspace.dataset` or `del subspace.sums`
 
         Arguments
         ---------

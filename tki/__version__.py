@@ -2,7 +2,7 @@
 
 __title__ = 'TKI'
 __description__ = 'TKI - Top-K Insights'
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 __author__ = 'Henning Merklinger'
 __author_email__ = 'henning.merklinger@gmail.com'
 __license__ = 'MIT'

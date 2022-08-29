@@ -368,7 +368,8 @@ class OutstandingLastInsight(PointInsight):
             raise InsightError("OutstandingLastInsight: Linear data")
 
         # move all values so that the minimum is 0
-        offset = np.min(ydata)
+        # Excluding the minimum of ydata
+        offset = np.sort(ydata)[1]
 
         # Fit data to distribution law
         # pylint: disable=unbalanced-tuple-unpacking
@@ -497,8 +498,8 @@ class TrendInsight(ShapeInsight):
 
     def __init__(self,
                  stat_distribution: rv_continuous = logistic,
-                 slope_mean: float = 0.0,
-                 slope_std: float = 0.2):
+                 slope_mean: float = 0.2,
+                 slope_std: float = 2.0):
         self.stat_dist = stat_distribution
         self.dist_params = {'loc': slope_mean, 'scale': slope_std}
 

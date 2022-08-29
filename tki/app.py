@@ -165,6 +165,7 @@ class App():
         """Starts webserver"""
         self._app.run(debug=self._debug, port=self._port)
 
+
 if __name__ == "__main__":
     app = App()
     app.run()

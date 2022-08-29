@@ -1,9 +1,9 @@
 
 # Top-K Insights
 
-Pandas based Python package to extract Top-K Insights from multi-dimensional data
+Pandas based Python package to extract Top-K Insights from multi-dimensional data.
 
-The package contains an implementation of the article 'Extracting Top-K Insights from Multi-dimensional Data' (2017) by Tang, B., Han, S., Yiu, M.L., Ding, R. and Zhang, D. and their subsequent work.
+The package contains an implementation of the article 'Extracting Top-K Insights from Multi-dimensional Data' (2017) by Tang, B., Han, S., Yiu, M.L., Ding, R. and Zhang, D. and their subsequent work based on my Bachelor Thesis.
 
 ## Requirements
 
