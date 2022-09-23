@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import logging
 
 from tki import TKI
 from tki.insights import OutstandingFirstInsight, OutstandingLastInsight, \
@@ -9,6 +10,9 @@ from tki.extractors import RankExtractor, DeltaPrevExtractor, \
 from tki.aggregators import SumAggregator
 from tki.dimensions import CardinalDimension, TemporalDimension, NominalDimension
 
+logging.basicConfig()
+logging.getLogger('tki').setLevel(logging.INFO)
+
 data = [
     ['H', 2010, 40], ['T', 2010, 38], ['F', 2010, 13], ['B', 2010, 20],
     ['H', 2011, 35], ['T', 2011, 34], ['F', 2011, 10], ['B', 2011, 18],
@@ -16,7 +20,6 @@ data = [
     ['H', 2013, 43], ['T', 2013, 29], ['F', 2013, 23], ['B', 2013, 17],
     ['H', 2014, 58], ['T', 2014, 36], ['F', 2014, 27], ['B', 2014, 19]
 ]
-
 extractors = {
     RankExtractor,
     DeltaPrevExtractor,

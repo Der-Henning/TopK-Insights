@@ -89,14 +89,13 @@ tki.save('insights.pkl')
 
 ![Insights](./insights.svg)
 
-
 ## Web Application
 
 The web application will provide a convenient interface for the tki package in the future.
 At the moment it is possible to visualize saved insights in the browser.
 Start the server with
 
-````
+````bash
 python -m tki.app
 ````
 

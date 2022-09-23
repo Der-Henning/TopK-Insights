@@ -385,9 +385,9 @@ class TKI():
         try:
             self._save_insight(insight.calc_insight(result))
         except InsightError as err:
-            log.debug(err)
+            log.debug("InsightError: %s", err)
         except Exception as exc:
-            log.warning(exc)
+            log.warning("Error calculating Insight: %s", exc)
 
     def _save_insight(self, result: InsightResult) -> None:
         self.heap.add(result)

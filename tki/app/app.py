@@ -9,6 +9,7 @@ from dash import Dash, html, dcc, Output, Input, dash_table, ALL
 from dash.exceptions import PreventUpdate
 
 from tki.insights import InsightResult
+from tki.app.plots import Plot
 
 class Upload(dcc.Upload):
     """Formatted Upload control"""
@@ -154,11 +155,13 @@ class App():
 
     def _generate_insight_figures(self) -> List[html.Div]:
         return [html.Div([
-            html.H4(f"{idx}) {type(insight.insight).__name__} - "
-                                f"Score: {insight.score:.2f}"),
-            html.Div(
-                f"{(insight.sibling_group, insight.composite_extractor)}"),
-            dcc.Graph(figure=insight.fig)
+            html.Div([
+                html.H4(f"{idx}) {type(insight.insight).__name__} - "f"Score: {insight.score:.2f}"),
+                html.Div(f"{(insight.sibling_group, insight.composite_extractor)}"),
+                dcc.Graph(figure=Plot(insight))]),
+            html.Div([
+                html.H4("Details:"),
+                html.Div(insight.p_value)], style={'display': 'inline-block'})
         ]) for idx, insight in enumerate(self._insights, 1)]
 
     def run(self) -> NoReturn:
