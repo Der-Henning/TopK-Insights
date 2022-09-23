@@ -1,6 +1,8 @@
+"""Module contains Plot Object"""
 from __future__ import annotations
 import plotly.graph_objects as go
 import numpy as np
+
 from tki.insights import InsightResult
 from tki.insights.compound_insight import CompoundInsight
 from tki.insights.point_insight import PointInsight, OutstandingInsight
@@ -9,7 +11,7 @@ from tki.insights.shape_insight import ShapeInsight, TrendInsight
 
 class Plot(go.Figure):
     """Graph Object Figure containing plot based on InsightResult
-    
+
     Parameters
     ----------
     insight_result : InsightResult
@@ -18,15 +20,14 @@ class Plot(go.Figure):
         Further parameters see plotly.graph_object.Figure
     """
     def __init__(self, insight_result: InsightResult, *args, **kwargs):
-        self._make_figure(insight_result, *args, **kwargs)
-
-    def _make_figure(self, insight_result, *args, **kwargs) -> None:
         if isinstance(insight_result.insight, PointInsight):
             self._point_insight(insight_result, *args, **kwargs)
         elif isinstance(insight_result.insight, ShapeInsight):
             self._shape_insight(insight_result, *args, **kwargs)
         elif isinstance(insight_result.insight, CompoundInsight):
             self._compound_insight(insight_result, *args, **kwargs)
+        else:
+            super().__init__(*args, **kwargs)
 
     def _point_insight(self, insight_result: InsightResult, *args, **kwargs) -> None:
         derived_measure = len(insight_result.composite_extractor.extractors) > 0

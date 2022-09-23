@@ -1,6 +1,6 @@
+import logging
 import pandas as pd
 import matplotlib.pyplot as plt
-import logging
 
 from tki import TKI
 from tki.insights import OutstandingFirstInsight, OutstandingLastInsight, \

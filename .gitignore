@@ -128,6 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+.vscode
 .DS_Store
 insights.pkl
 test_app.py

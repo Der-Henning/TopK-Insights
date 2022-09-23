@@ -89,15 +89,16 @@ tki.save('insights.pkl')
 
 ![Insights](./insights.svg)
 
-## Web Application
+## User Interface
 
-The web application will provide a convenient interface for the tki package in the future.
+The App will provide a web based user interface for the tki package in the future.
 At the moment it is possible to visualize saved insights in the browser.
-Start the server with
+
+Start the web server with
 
 ````bash
 python -m tki.app
 ````
 
 The project will be accessible via `http://127.0.0.1:8050/` in your web browser.
-To display your previously generated results open the `Result` tab and upload your `insights.pkl` file.
+To display your previously generated results open the `Results` tab and upload your previously generated `insights.pkl` file.

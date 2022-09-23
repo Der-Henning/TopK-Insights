@@ -13,8 +13,7 @@ with open(os.path.join(here, 'tki', '__version__.py')) as f:
 with open('README.md', 'r') as f:
     readme = f.read()
 
-# package configuration - for reference see:
-# https://setuptools.readthedocs.io/en/latest/setuptools.html#id9
+# package configuration
 setup(
     name=about['__title__'],
     description=about['__description__'],
@@ -26,9 +25,9 @@ setup(
     url=about['__url__'],
     packages=['tki'],
     include_package_data=True,
-    python_requires=">=3.8.*",
+    python_requires='>=3.8.*',
     install_requires=['numpy', 'pandas', 'scipy', 'matplotlib', 'dash'],
     license=about['__license__'],
     zip_safe=False,
-    keywords='insights'
+    keywords=['insights']
 )
