@@ -1,5 +1,5 @@
 matplotlib==3.6.*
 numpy==1.23.*
-pandas==1.4.*
+pandas==1.5.*
 scipy==1.9.*
 dash==2.6.*
