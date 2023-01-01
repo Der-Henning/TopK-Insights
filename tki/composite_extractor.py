@@ -1,12 +1,13 @@
 """Module containing the Composite Extractor class"""
-from typing import List, Union, Generator, TypedDict
 from itertools import permutations, product
+from typing import Generator, List, TypedDict, Union
+
 import pandas as pd
 
-from tki.spaces import SiblingGroup, Subspace
 from tki.aggregators import Aggregator
-from tki.extractors import Extractor
 from tki.dimensions import Dimension
+from tki.extractors import Extractor
+from tki.spaces import SiblingGroup, Subspace
 
 
 class CompositeExtractor():
@@ -28,7 +29,7 @@ class CompositeExtractor():
         self.extractors = extractors
 
     def __getitem__(self, level: Union[int, slice]
-        ) -> Union[Aggregator, Extractor]:
+                    ) -> Union[Aggregator, Extractor]:
         if isinstance(level, slice):
             comp = [self[idx] for idx in range(*level.indices(len(self)))]
             return CompositeExtractor(comp[0], comp[1:])
@@ -119,7 +120,9 @@ def generate_composite_extractors(
         CompositeExtractor
     """
     for comp in product(product(aggregators, measurements),
-        permutations(product(extractors, dimensions), depth - 1)):
+                        permutations(
+                            product(extractors, dimensions),
+                            depth - 1)):
         yield CompositeExtractor(
             aggregator=comp[0][0](comp[0][1]),
             extractors=[c[0](c[1]) for c in comp[1]])

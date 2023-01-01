@@ -1,12 +1,13 @@
 """Module containing the Subspace and SiblingGroup classes"""
-from typing import List, Any, Union
 from copy import deepcopy
 from functools import cached_property
-import pandas as pd
-import numpy as np
+from typing import Any, List, Union
 
-from tki.dimensions import Dimension
+import numpy as np
+import pandas as pd
+
 from tki.aggregators import Aggregator
+from tki.dimensions import Dimension
 
 
 class Subspace():
@@ -41,7 +42,7 @@ class Subspace():
         """Filtered Data Set"""
         dim_filter = [
             (self._dataset['dimensions', dimension.name] == dimension.value)
-                for dimension in self.dimensions if dimension.value != '*']
+            for dimension in self.dimensions if dimension.value != '*']
         if len(dim_filter) > 0:
             return self._dataset[np.logical_and.reduce(dim_filter)]
         return self._dataset
@@ -70,7 +71,19 @@ class Subspace():
         )
         cube.index.names = [name[1] for name in cube.index.names]
         if len(dimensions) > 1:
-            return cube.unstack(dimensions[0].name)
+            cube = cube.unstack(dimensions[1].name)
+        for axis, dimension in enumerate(dimensions):
+            if dimension.is_ordinal:
+                cube.sort_index(axis=axis, inplace=True)
+                if dimension.is_temporal and dimension.freq is not None:
+                    cube = cube.reindex(
+                        pd.date_range(
+                            cube.axes[axis][0],
+                            cube.axes[axis][-1],
+                            freq=dimension.freq,
+                            name=cube.axes[axis].name
+                        ), axis=axis)
+                    cube.fillna(0.0, inplace=True)
         return cube
 
     def set(self, dimension: Dimension, value: Any) -> None:

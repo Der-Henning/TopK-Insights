@@ -1,15 +1,17 @@
 """Module containing the Compound Insight classes"""
 from __future__ import annotations
-from scipy.stats import pearsonr
+
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import pearsonr
 
 from tki.composite_extractor import ExtractionResult
-from tki.insights import Insight, InsightError, InsightResult
+from tki.insights.insight import Insight, InsightError, InsightResult
 
 
 class CompoundInsight(Insight):
     """Parent class for Compound Insights"""
+
     def _check_validity(self, extraction_result: ExtractionResult) -> None:
         super()._check_validity(extraction_result)
 
@@ -46,17 +48,19 @@ class CorrelationInsight(CompoundInsight):
         super()._check_validity(extraction_result)
 
         # CorrelationInsight only viable for ordinal data
-        if extraction_result["sibling_group"] and \
-            not extraction_result["sibling_group"].dividing_dimension.is_ordinal:
+        sibling_group = extraction_result.get("sibling_group")
+        if sibling_group and not sibling_group.dividing_dimension.is_ordinal:
             raise InsightError(self, "Dividing dimension is not ordinal")
 
-        # If an input array is constant the correlation coefficient is not defined.
+        # If an input array is constant the correlation coefficient
+        # is not defined.
         data = extraction_result["data"]
         if (data.iloc[0] == data.iloc[0].iloc[0]).all() or \
                 (data.iloc[1] == data.iloc[1].iloc[0]).all():
             raise InsightError(self, "Constant input array")
 
-    def _calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+    def _calc_insight(self, extraction_result: ExtractionResult
+                      ) -> InsightResult:
         data = extraction_result["data"]
 
         # Sort by column labels

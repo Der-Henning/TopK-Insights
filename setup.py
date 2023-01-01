@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 
 import os
+
 from setuptools import setup
 
 # get key package details from py_pkg/__version__.py
 about = {}  # type: ignore
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'tki', '__version__.py')) as f:
+with open(os.path.join(here, 'tki', '__version__.py'), encoding='utf-8') as f:
     exec(f.read(), about)
 
 # load the README file and use it as the long_description for PyPI
-with open('README.md', 'r') as f:
+with open('README.md', 'r', encoding='utf-8') as f:
     readme = f.read()
 
 # package configuration

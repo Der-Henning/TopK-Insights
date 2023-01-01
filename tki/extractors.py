@@ -1,6 +1,8 @@
 """Module containing all Extractor classes"""
 from __future__ import annotations
+
 from typing import Union
+
 import pandas as pd
 
 from tki.dimensions import Dimension
@@ -27,7 +29,7 @@ class Extractor(metaclass=MetaExtractor):
         self.dimension = dimension
 
     def is_valid(self, subspace: Subspace,
-        prev_extractor: Extractor = None) -> bool:
+                 prev_extractor: Extractor = None) -> bool:
         """Checks if Extractor is valid for a given Sibling Group
         and Composite Extractor.
 
@@ -46,7 +48,7 @@ class Extractor(metaclass=MetaExtractor):
             if dim == self.dimension and dim.value != '*':
                 return False
         if isinstance(prev_extractor, type(self)) and \
-            prev_extractor.dimension == self.dimension:
+                prev_extractor.dimension == self.dimension:
             return False
         return True
 
@@ -102,10 +104,11 @@ class RankExtractor(Extractor):
     name = 'Rank'
 
     def is_valid(self, subspace: Subspace, prev_extractor: Extractor = None
-        ) -> bool:
-        return super().is_valid(subspace, prev_extractor) and \
-            not (isinstance(prev_extractor, (DeltaMeanExtractor, ProportionExtractor))
-            and prev_extractor.dimension == self.dimension)
+                 ) -> bool:
+        return super().is_valid(subspace, prev_extractor) and not \
+            (isinstance(prev_extractor,
+                        (DeltaMeanExtractor, ProportionExtractor))
+             and prev_extractor.dimension == self.dimension)
 
     def extract(self, cube: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
         if cube.empty:
@@ -126,7 +129,7 @@ class DeltaPrevExtractor(Extractor):
     name = 'DeltaPrev'
 
     def is_valid(self, subspace: Subspace,
-        prev_extractor: Extractor = None) -> bool:
+                 prev_extractor: Extractor = None) -> bool:
         return super().is_valid(subspace, prev_extractor) and \
             self.dimension.is_ordinal
 
@@ -150,7 +153,7 @@ class DeltaMeanExtractor(Extractor):
     name = 'DeltaMean'
 
     def is_valid(self, subspace: Subspace,
-        prev_extractor: Extractor = None) -> bool:
+                 prev_extractor: Extractor = None) -> bool:
         return super().is_valid(subspace, prev_extractor) and \
             not isinstance(prev_extractor, DeltaMeanExtractor) and \
             not isinstance(prev_extractor, ProportionExtractor)
@@ -179,7 +182,7 @@ class ProportionExtractor(Extractor):
     name = 'Proportion'
 
     def is_valid(self, subspace: Subspace,
-        prev_extractor: Extractor = None) -> bool:
+                 prev_extractor: Extractor = None) -> bool:
         return super().is_valid(subspace) and \
             not isinstance(prev_extractor, Extractor)
 

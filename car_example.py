@@ -1,14 +1,17 @@
 import logging
-import pandas as pd
+
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from tki import TKI
-from tki.insights import OutstandingFirstInsight, OutstandingLastInsight, \
-    TrendInsight, EvennessInsight, CorrelationInsight
-from tki.extractors import RankExtractor, DeltaPrevExtractor, \
-    DeltaMeanExtractor, ProportionExtractor
 from tki.aggregators import SumAggregator
-from tki.dimensions import CardinalDimension, TemporalDimension, NominalDimension
+from tki.dimensions import (CardinalDimension, NominalDimension,
+                            TemporalDimension)
+from tki.extractors import (DeltaMeanExtractor, DeltaPrevExtractor,
+                            ProportionExtractor, RankExtractor)
+from tki.insights import (CorrelationInsight, EvennessInsight,
+                          OutstandingFirstInsight, OutstandingLastInsight,
+                          TrendInsight)
 
 logging.basicConfig()
 logging.getLogger('tki').setLevel(logging.INFO)
@@ -51,7 +54,7 @@ tki.run()
 
 fig, axes = plt.subplots(7, 3, figsize=(25, 40), dpi=80)
 for idx, i in enumerate(tki.heap.insights):
-    plt.axes(axes[int(idx/3)][idx % 3])
+    plt.axes(axes[int(idx / 3)][idx % 3])
     i.plot()
     plt.title(
         f"{idx + 1}) {type(i.insight).__name__} "

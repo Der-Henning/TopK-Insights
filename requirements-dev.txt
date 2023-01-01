@@ -1,0 +1,7 @@
+-r requirements.txt
+pytest
+pytest-cov
+ipykernel
+pre-commit
+flake8
+autopep8

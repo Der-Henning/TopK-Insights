@@ -1,12 +1,14 @@
 """Module containing the Point Insight classes"""
 from __future__ import annotations
+
 import math
 from functools import partial
 from typing import Callable
-from scipy.stats import rv_continuous, norm, t
-from scipy.optimize import curve_fit
+
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import curve_fit
+from scipy.stats import norm, rv_continuous, t
 
 from tki.composite_extractor import ExtractionResult
 from tki.insights import Insight, InsightError, InsightResult
@@ -41,6 +43,7 @@ def cubic_dist(arr: np.ndarray, alpha: float,
 
 class PointInsight(Insight):
     """Parent class for Point Insights"""
+
     def _check_validity(self, extraction_result: ExtractionResult) -> None:
         super()._check_validity(extraction_result)
 
@@ -51,16 +54,19 @@ class PointInsight(Insight):
 
 class OutstandingInsight(PointInsight):
     """Parent class for Outstanding Point Insights"""
+
     def __init__(self,
                  distribution_law: Callable[..., np.ndarray]
-                    = power_dist_fix_beta(0.7),
+                 = power_dist_fix_beta(0.7),
                  stat_distribution: rv_continuous = norm):
         self.dist_law = distribution_law
         self.stat_dist = stat_distribution
 
-    def calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+    def calc_insight(self, extraction_result: ExtractionResult
+                     ) -> InsightResult:
         # Sort Data descending by value
-        extraction_result["data"] = extraction_result["data"].sort_values(ascending=False)
+        extraction_result["data"] = extraction_result["data"].sort_values(
+            ascending=False)
 
         return super().calc_insight(extraction_result)
 
@@ -94,7 +100,9 @@ class OutstandingFirstInsight(OutstandingInsight):
         Statistic distribution to describe the distribution of residuals
         Defaults to scipy.stats.norm
     """
-    def _calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+
+    def _calc_insight(self, extraction_result: ExtractionResult
+                      ) -> InsightResult:
         data = extraction_result["data"]
         ydata = data.values
         xdata = range(1, ydata.size + 1)
@@ -155,6 +163,7 @@ class OutstandingLastInsight(OutstandingInsight):
         Statistic distribution to describe the distribution of residuals
         Defaults to scipy.stats.norm
     """
+
     def _check_validity(self, extraction_result: ExtractionResult) -> None:
         super()._check_validity(extraction_result)
 
@@ -166,7 +175,8 @@ class OutstandingLastInsight(OutstandingInsight):
         if diff[-1] / diff.sum() < 1 / data.size:
             raise InsightError(self, "Too low variance on tail")
 
-    def _calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+    def _calc_insight(self, extraction_result: ExtractionResult
+                      ) -> InsightResult:
         data = extraction_result["data"]
         ydata = data.values
         xdata = range(1, ydata.size + 1)
@@ -213,10 +223,12 @@ class EvennessInsight(PointInsight):
     It is based on the Shannon-Index. A high score stands for a very
     even distribution.
     """
+
     def _check_validity(self, extraction_result: ExtractionResult) -> None:
         super()._check_validity(extraction_result)
 
-        # The Shannon-Index only works only for values greater or equal to zero.
+        # The Shannon-Index only works only for values
+        # greater or equal to zero.
         if np.any(extraction_result["data"].values < 0):
             raise InsightError(self, "Data contains values < 0")
 
@@ -225,7 +237,8 @@ class EvennessInsight(PointInsight):
         if data_sum == 0:
             raise InsightError(self, "Sum of values is zero")
 
-    def _calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+    def _calc_insight(self, extraction_result: ExtractionResult
+                      ) -> InsightResult:
         data = extraction_result["data"]
 
         # Calculate the Shannon-Index

@@ -1,8 +1,9 @@
 """Module containing the Shape Insight classes"""
 from __future__ import annotations
-from scipy.stats import rv_continuous, logistic, linregress
+
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import linregress, logistic, rv_continuous
 
 from tki.composite_extractor import ExtractionResult
 from tki.insights import Insight, InsightError, InsightResult
@@ -10,7 +11,9 @@ from tki.insights import Insight, InsightError, InsightResult
 
 class ShapeInsight(Insight):
     """Parent class for Shape Insights"""
-    def calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+
+    def calc_insight(self, extraction_result: ExtractionResult
+                     ) -> InsightResult:
         # Sort Data by index
         extraction_result["data"] = extraction_result["data"].sort_index()
 
@@ -22,10 +25,10 @@ class ShapeInsight(Insight):
         # Data must be finite
         if not np.all(np.isfinite(extraction_result["data"].values)):
             raise InsightError(self, "Data is not finite!")
-        
+
         # Dividing Dimension must be temporal
-        if extraction_result["sibling_group"] and \
-            not extraction_result["sibling_group"].dividing_dimension.is_temporal:
+        sibling_group = extraction_result.get("sibling_group")
+        if sibling_group and not sibling_group.dividing_dimension.is_temporal:
             raise InsightError(self, "Dividing dimension is not temporal")
 
 
@@ -41,7 +44,8 @@ class TrendInsight(ShapeInsight):
     Parameters
     ----------
     stat_distribution : scipy.stats.rv_continuous
-        Statistical distribution function describing the distribution of slopes.
+        Statistical distribution function describing the
+        distribution of slopes.
         Defaults to scipy.stats.logistic
     slope_mean : float
         Position of the distribution of slopes
@@ -50,6 +54,7 @@ class TrendInsight(ShapeInsight):
         Standard derivation of the distribution of slopes
         Defaults to 0.2
     """
+
     def __init__(self,
                  stat_distribution: rv_continuous = logistic,
                  slope_mean: float = 0.2,
@@ -57,7 +62,8 @@ class TrendInsight(ShapeInsight):
         self.stat_dist = stat_distribution
         self.dist_params = {'loc': slope_mean, 'scale': slope_std}
 
-    def _calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+    def _calc_insight(self, extraction_result: ExtractionResult
+                      ) -> InsightResult:
         data = extraction_result["data"]
 
         # Fit linear regression on the data
@@ -73,7 +79,8 @@ class TrendInsight(ShapeInsight):
         p_value = self.stat_dist.sf(
             abs(slope), **self.dist_params)
 
-        # rvalue**2 is a measurement for the precision of the linear regression.
+        # rvalue**2 is a measurement for the precision of the
+        # linear regression.
         # It is used to scale the final score.
         significance = (1 - p_value) * r_value**2
 

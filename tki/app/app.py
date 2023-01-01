@@ -1,18 +1,22 @@
 """Module containing a dash application as interface for tki"""
-from typing import NoReturn, List, Tuple, Any
 import base64
 import io
 import pickle
-import pandas as pd
+from typing import Any, List, NoReturn, Tuple
+
 import dash
-from dash import Dash, html, dcc, Output, Input, dash_table, ALL
+import pandas as pd
+from dash import ALL, Dash, Input, Output, dash_table, dcc, html
+from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 
-from tki.insights import InsightResult
 from tki.app.plots import Plot
+from tki.insights import InsightResult
+
 
 class Upload(dcc.Upload):
     """Formatted Upload control"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(
             children=html.Div([
@@ -31,6 +35,7 @@ class Upload(dcc.Upload):
             },
             *args, **kwargs)
 
+
 class App():
     """Web application providing an interface for TKI
 
@@ -46,6 +51,7 @@ class App():
     # Create Interface to initialize TKI and run the calculation
     # Global variables = bad. Only for single user sessions.
     # For multi session capability propably a database (Redis?) is needed.
+
     def __init__(self, port: int = 8050, debug: bool = False) -> None:
         self._port = port
         self._debug = debug
@@ -93,7 +99,7 @@ class App():
         # Upload data as .csv
         self._app.callback(
             [Output('data-table', 'data'),
-            Output('data-table', 'columns')],
+             Output('data-table', 'columns')],
             Input('upload-data', 'contents')
         )(self._upload_data)
 
@@ -122,10 +128,11 @@ class App():
         decoded = base64.b64decode(content_string)
         self._data = pd.read_csv(io.BytesIO(decoded))
         return (self._data.to_dict('records'),
-            [{"name": i, "id": i, "selectable": True} for i in self._data.columns])
+                [{"name": i, "id": i, "selectable": True}
+                for i in self._data.columns])
 
     def _update_dimension_selector(self, columns: List[str]
-        ) -> List[dash.development.base_component.Component]:
+                                   ) -> List[Component]:
         if columns is None:
             raise PreventUpdate
         dims = [html.Div([
@@ -136,7 +143,7 @@ class App():
                 id={'type': 'dimension-dropdown', 'index': col})
         ]) for col in columns]
         for key in list(self._dim_setting.keys()):
-            if not key in columns:
+            if key not in columns:
                 del self._dim_setting[key]
         return [html.H4('Edit Dimensions'), *dims]
 
@@ -156,8 +163,11 @@ class App():
     def _generate_insight_figures(self) -> List[html.Div]:
         return [html.Div([
             html.Div([
-                html.H4(f"{idx}) {type(insight.insight).__name__} - "f"Score: {insight.score:.2f}"),
-                html.Div(f"{(insight.sibling_group, insight.composite_extractor)}"),
+                html.H4(
+                    f"{idx}) {type(insight.insight).__name__} - "
+                    f"Score: {insight.score:.2f}"),
+                html.Div(
+                    f"{(insight.sibling_group, insight.composite_extractor)}"),
                 dcc.Graph(figure=Plot(insight))]),
             html.Div([
                 html.H4("Details:"),

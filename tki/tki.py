@@ -1,21 +1,22 @@
 """Module containing the main TKI class"""
 import logging
+import pickle
 import signal
 from contextlib import contextmanager
-from itertools import product, combinations, chain
-from typing import List, Set, Generator
 from copy import deepcopy
-import pickle
-import pandas as pd
-import numpy as np
+from itertools import chain, combinations, product
+from typing import Generator, List, Set
 
+import numpy as np
+import pandas as pd
+
+from tki.aggregators import AggregationError, Aggregator
+from tki.composite_extractor import CompositeExtractor, ExtractionResult
 from tki.dimensions import Dimension
 from tki.extractors import Extractor
-from tki.aggregators import AggregationError, Aggregator
-from tki.insights import Insight, CompoundInsight, InsightError, InsightResult
-from tki.spaces import Subspace, SiblingGroup
-from tki.composite_extractor import CompositeExtractor, ExtractionResult
 from tki.heap import HeapMemory
+from tki.insights import CompoundInsight, Insight, InsightError, InsightResult
+from tki.spaces import SiblingGroup, Subspace
 
 log = logging.getLogger('tki')
 log.setLevel(logging.INFO)
@@ -125,8 +126,8 @@ class TKI():
         dataset = self._prepare_dataset()
         search_space_size = self._calc_search_space_size(dataset)
         log.info("Size of Search Space: %s",
-            np.format_float_scientific(search_space_size, 2)
-            if search_space_size > 100000 else int(search_space_size))
+                 np.format_float_scientific(search_space_size, 2)
+                 if search_space_size > 100000 else int(search_space_size))
         # Initialize Heap Memory
         self.heap = HeapMemory(self.result_size)
         # Initialize Subspace and start insight extraction
@@ -137,7 +138,8 @@ class TKI():
 
     def _prepare_dataset(self) -> pd.DataFrame:
         dimension_names = [dimension.name for dimension in self.dimensions]
-        measurement_names = [measurement.name for measurement in self.measurements]
+        measurement_names = [
+            measurement.name for measurement in self.measurements]
         # prepare dataset
         dataset = pd.concat(
             [self.dataset[dimension_names], self.dataset[measurement_names]],
@@ -148,13 +150,13 @@ class TKI():
                 dataset['dimensions'][dimension.name])
         return dataset
 
-    def _calc_search_space_size(self, dataset: pd.DataFrame) -> np.float:
+    def _calc_search_space_size(self, dataset: pd.DataFrame) -> float:
         # Estimate search space size
-        num_insights = np.float(len(self.insights))
-        num_dimensions = np.float(len(self.dimensions))
-        num_measurements = np.float(len(self.measurements))
-        num_extractors = np.float(len(self.extractors))
-        max_dim_values = np.float(dataset['dimensions'].nunique().max())
+        num_insights = float(len(self.insights))
+        num_dimensions = float(len(self.dimensions))
+        num_measurements = float(len(self.measurements))
+        num_extractors = float(len(self.extractors))
+        max_dim_values = float(dataset['dimensions'].nunique().max())
         return num_insights * num_dimensions * num_measurements * \
             (num_extractors * num_dimensions)**(self.depth - 1) * \
             (max_dim_values + 1)**num_dimensions
@@ -169,8 +171,10 @@ class TKI():
         log.info("Current Subspace: %s", subspace)
         max_impact = (subspace.sums / self._sums).max()
         for result in self._extract(subspace, compound=any(
-            issubclass(type(insight), CompoundInsight) for insight in self.insights
+            issubclass(type(insight), CompoundInsight)
+            for insight in self.insights
         )):
+            log.debug(result['impact'])
             self._calculate_insights(result)
             if max_impact < self.heap.upper_bound:
                 log.debug(
@@ -194,7 +198,7 @@ class TKI():
                 self._enumerate_insights(sub_subspace)
 
     def _extract(self, subspace: Subspace, compound: bool = False
-                ) -> Generator[ExtractionResult, None, None]:
+                 ) -> Generator[ExtractionResult, None, None]:
         # TODO:
         # This needs some refactoring ...
 
@@ -220,7 +224,7 @@ class TKI():
             # block dependent dimensions
             if (len(dimension_pair) > 1 and
                (dimension_pair[0].name in dimension_pair[1].dependent_dimensions or
-                dimension_pair[1].name in dimension_pair[0].dependent_dimensions)):
+                    dimension_pair[1].name in dimension_pair[0].dependent_dimensions)):
                 log.debug('Skipping dependent Dimensions %s', dimension_pair)
                 continue
             try:
@@ -240,7 +244,7 @@ class TKI():
                 if isinstance(extractions[0][0]['data'], pd.Series):
                     for result in extraction:
                         sibling_group = SiblingGroup(
-                                deepcopy(subspace), dimension_pair[0])
+                            deepcopy(subspace), dimension_pair[0])
                         if result['composite_extractor'].is_useful(sibling_group):
                             yield ExtractionResult({
                                 **result,
@@ -256,17 +260,17 @@ class TKI():
                         for loc, row in result['data'].iterrows():
                             impact = extractions[0][0]['data'].loc[loc].sum() / \
                                 self._sums[result['composite_extractor']
-                                .aggregator.measurement.name]
+                                           .aggregator.measurement.name]
                             if impact > self.heap.upper_bound:
-                                subspace.set(dimension_pair[1], loc)
+                                subspace.set(dimension_pair[0], loc)
                                 subsubspace = Subspace(
                                     subspace.dataset,
                                     deepcopy(subspace.dimensions),
                                     subspace.measurements)
-                                subspace.set(dimension_pair[1], '*')
+                                subspace.set(dimension_pair[0], '*')
                                 sibling_group = SiblingGroup(
-                                        subsubspace, dimension_pair[0]
-                                    )
+                                    subsubspace, dimension_pair[1]
+                                )
                                 if result['composite_extractor'].is_useful(sibling_group):
                                     yield ExtractionResult({
                                         **result,
@@ -278,17 +282,17 @@ class TKI():
                         for loc, row in result['data'].T.iterrows():
                             impact = extractions[0][0]['data'].T.loc[loc].sum() / \
                                 self._sums[result['composite_extractor']
-                                .aggregator.measurement.name]
+                                           .aggregator.measurement.name]
                             if impact > self.heap.upper_bound:
-                                subspace.set(dimension_pair[0], loc)
+                                subspace.set(dimension_pair[1], loc)
                                 subsubspace = Subspace(
                                     subspace.dataset,
                                     deepcopy(subspace.dimensions),
                                     subspace.measurements)
-                                subspace.set(dimension_pair[0], '*')
+                                subspace.set(dimension_pair[1], '*')
                                 sibling_group = SiblingGroup(
-                                        subsubspace, dimension_pair[1]
-                                    )
+                                    subsubspace, dimension_pair[0]
+                                )
                                 if result['composite_extractor'].is_useful(sibling_group):
                                     yield ExtractionResult({
                                         **result,
@@ -302,36 +306,36 @@ class TKI():
                         if compound:
                             for comb in combinations(result['data'].index.values, 2):
                                 impact = (extractions[0][0]['data'].loc[comb[0]].sum() +
-                                    extractions[0][0]['data'].loc[comb[1]].sum()) / \
+                                          extractions[0][0]['data'].loc[comb[1]].sum()) / \
                                     self._sums[result['composite_extractor']
-                                    .aggregator.measurement.name] / 2
+                                               .aggregator.measurement.name] / 2
                                 if impact > self.heap.upper_bound:
                                     sibling_group = SiblingGroup(
-                                            deepcopy(subspace),
-                                            dimension_pair[0]
-                                        )
+                                        deepcopy(subspace),
+                                        dimension_pair[1]
+                                    )
                                     if result['composite_extractor'].is_useful(sibling_group):
                                         yield ExtractionResult({
                                             **result,
                                             'data': result['data'].loc[[comb[0], comb[1]]],
-                                            'impact' : impact,
+                                            'impact': impact,
                                             'sibling_group': sibling_group
                                         })
                             for comb in combinations(result['data'].columns.values, 2):
                                 impact = (extractions[0][0]['data'].T.loc[comb[0]].sum() +
-                                    extractions[0][0]['data'].T.loc[comb[1]].sum()) / \
+                                          extractions[0][0]['data'].T.loc[comb[1]].sum()) / \
                                     self._sums[result['composite_extractor']
-                                    .aggregator.measurement.name] / 2
+                                               .aggregator.measurement.name] / 2
                                 if impact > self.heap.upper_bound:
                                     sibling_group = SiblingGroup(
-                                            deepcopy(subspace),
-                                            dimension_pair[1]
-                                        )
+                                        deepcopy(subspace),
+                                        dimension_pair[0]
+                                    )
                                     if result['composite_extractor'].is_useful(sibling_group):
                                         yield ExtractionResult({
                                             **result,
                                             'data': result['data'].T.loc[[comb[0], comb[1]]],
-                                            'impact' : impact,
+                                            'impact': impact,
                                             'sibling_group': sibling_group
                                         })
 

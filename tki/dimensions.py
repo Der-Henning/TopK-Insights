@@ -1,6 +1,8 @@
 """Module containing all Dimension classes"""
 from __future__ import annotations
+
 from typing import List
+
 import pandas as pd
 
 

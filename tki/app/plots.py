@@ -1,11 +1,12 @@
 """Module contains Plot Object"""
 from __future__ import annotations
-import plotly.graph_objects as go
+
 import numpy as np
+import plotly.graph_objects as go
 
 from tki.insights import InsightResult
 from tki.insights.compound_insight import CompoundInsight
-from tki.insights.point_insight import PointInsight, OutstandingInsight
+from tki.insights.point_insight import OutstandingInsight, PointInsight
 from tki.insights.shape_insight import ShapeInsight, TrendInsight
 
 
@@ -19,6 +20,7 @@ class Plot(go.Figure):
     *args, **kwargs:
         Further parameters see plotly.graph_object.Figure
     """
+
     def __init__(self, insight_result: InsightResult, *args, **kwargs):
         if isinstance(insight_result.insight, PointInsight):
             self._point_insight(insight_result, *args, **kwargs)
@@ -29,23 +31,27 @@ class Plot(go.Figure):
         else:
             super().__init__(*args, **kwargs)
 
-    def _point_insight(self, insight_result: InsightResult, *args, **kwargs) -> None:
-        derived_measure = len(insight_result.composite_extractor.extractors) > 0
+    def _point_insight(self, insight_result: InsightResult, *args, **kwargs
+                       ) -> None:
+        derived_measure = len(
+            insight_result.composite_extractor.extractors) > 0
+        measurement = insight_result.composite_extractor.aggregator.measurement
         super().__init__(
             layout=go.Layout(
-                xaxis = {
+                xaxis={
                     'tickmode': 'array',
-                    'tickvals': list(range(1, len(insight_result.data.values) + 1)),
+                    'tickvals': list(range(1, len(insight_result.data.values
+                                                  ) + 1)),
                     'ticktext': insight_result.data.index.get_level_values(
                         insight_result.data.index.names[-1]),
                     'title': insight_result.data.index.names[-1]},
-                yaxis = {
+                yaxis={
                     'title': f"{'Derived measure ' if derived_measure else ''}"
-                        f"{insight_result.composite_extractor.aggregator.measurement}"},
+                    f"{measurement}"},
                 legend={
                     'orientation': "h",
                     'yanchor': "bottom", 'y': 1.02,
-                    'xanchor': "right", 'x': 1 } ),
+                    'xanchor': "right", 'x': 1}),
             *args, **kwargs)
         self.add_trace(go.Scatter(
             name=str(insight_result.sibling_group.subspace),
@@ -58,23 +64,27 @@ class Plot(go.Figure):
                 y=insight_result.prediction,
                 mode="lines", line={'color': "orange"}))
 
-    def _shape_insight(self, insight_result: InsightResult, *args, **kwargs) -> None:
-        derived_measure = len(insight_result.composite_extractor.extractors) > 0
+    def _shape_insight(self, insight_result: InsightResult, *args, **kwargs
+                       ) -> None:
+        derived_measure = len(
+            insight_result.composite_extractor.extractors) > 0
+        measurement = insight_result.composite_extractor.aggregator.measurement
         super().__init__(
             layout=go.Layout(
-                xaxis = {
+                xaxis={
                     'tickmode': 'array',
-                    'tickvals': list(range(1, len(insight_result.data.values) + 1)),
+                    'tickvals': list(range(1, len(insight_result.data.values
+                                                  ) + 1)),
                     'ticktext': insight_result.data.index.get_level_values(
                         insight_result.data.index.names[-1]),
                     'title': insight_result.data.index.names[-1]},
-                yaxis = {
+                yaxis={
                     'title': f"{'Derived measure ' if derived_measure else ''}"
-                        f"{insight_result.composite_extractor.aggregator.measurement}"},
+                    f"{measurement}"},
                 legend={
                     'orientation': "h",
                     'yanchor': "bottom", 'y': 1.02,
-                    'xanchor': "right", 'x': 1 } ),
+                    'xanchor': "right", 'x': 1}),
             *args, **kwargs)
         self.add_trace(go.Scatter(
             name=str(insight_result.sibling_group.subspace),
@@ -84,27 +94,31 @@ class Plot(go.Figure):
             x_data = np.arange(1, len(insight_result.data.values) + 1)
             self.add_trace(go.Scatter(
                 name="regression", x=x_data,
-                y=insight_result.intercept + (x_data - 1) * insight_result.slope,
+                y=insight_result.intercept + (x_data - 1
+                                              ) * insight_result.slope,
                 mode="lines", line={'color': "orange"}))
 
-    def _compound_insight(self, insight_result: InsightResult, *args, **kwargs) -> None:
-        derived_measure = len(insight_result.composite_extractor.extractors) > 0
+    def _compound_insight(self, insight_result: InsightResult, *args, **kwargs
+                          ) -> None:
+        derived_measure = len(
+            insight_result.composite_extractor.extractors) > 0
+        measurement = insight_result.composite_extractor.aggregator.measurement
         x_data = list(range(1, insight_result.data.columns.size + 1))
         super().__init__(
             layout=go.Layout(
-                xaxis = {
+                xaxis={
                     'tickmode': 'array',
                     'tickvals': x_data,
                     'ticktext': insight_result.data.columns.get_level_values(
                         insight_result.data.columns.names[-1]),
                     'title': insight_result.data.columns.names[-1]},
-                yaxis = {
+                yaxis={
                     'title': f"{'Derived measure ' if derived_measure else ''}"
-                        f"{insight_result.composite_extractor.aggregator.measurement}"},
+                    f"{measurement}"},
                 legend={
                     'orientation': "h",
                     'yanchor': "bottom", 'y': 1.02,
-                    'xanchor': "right", 'x': 1} ),
+                    'xanchor': "right", 'x': 1}),
             *args, **kwargs)
         for loc, row in insight_result.data.iterrows():
             insight_result.sibling_group.subspace.set(

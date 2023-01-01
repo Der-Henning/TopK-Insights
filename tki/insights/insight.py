@@ -1,7 +1,9 @@
 """Module containing the Base Insight classes"""
 from __future__ import annotations
+
 from functools import total_ordering
 from typing import Union
+
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -10,8 +12,10 @@ from tki.composite_extractor import ExtractionResult
 
 class InsightError(Exception):
     """Error calculation Insight"""
-    def __init__(self, insight: Insight, message = "") -> None:
+
+    def __init__(self, insight: Insight, message="") -> None:
         super().__init__(f"{insight.name} - {message}")
+
 
 @total_ordering
 class InsightResult():
@@ -65,7 +69,8 @@ class InsightResult():
 class Insight():
     """Parent class for Insights"""
 
-    def calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
+    def calc_insight(self, extraction_result: ExtractionResult
+                     ) -> InsightResult:
         """Calculate Insight score
 
         Arguments
@@ -82,16 +87,18 @@ class Insight():
             InsightResult
         """
         self._check_validity(extraction_result)
-        return self._calc_insight(extraction_result) 
+        return self._calc_insight(extraction_result)
 
     def _check_validity(self, extraction_result: ExtractionResult) -> None:
-        ## This function will be called before the calculation of the insight.
-        ## Implement to add any tests if the data is valid and raise InsightError
-        ## if not valid.
+        # This function will be called before the calculation
+        # of the insight.
+        # Implement to add any tests if the data is valid and
+        # raise InsightError if not valid.
         pass
 
-    def _calc_insight(self, extraction_result: ExtractionResult) -> InsightResult:
-        ## Must be implemented from any child class.
+    def _calc_insight(self, extraction_result: ExtractionResult
+                      ) -> InsightResult:
+        # Must be implemented from any child class.
         raise NotImplementedError
 
     @property

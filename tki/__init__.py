@@ -3,5 +3,7 @@
 For Documentation and Issues please refer to
 https://github.com/Der-Henning/TopK-Insights
 """
-from tki.tki import TKI
 from tki.app import App
+from tki.tki import TKI
+
+__all__ = ['App', 'TKI']
