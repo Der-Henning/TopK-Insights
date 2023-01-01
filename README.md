@@ -1,3 +1,5 @@
+[![Tests](https://github.com/Der-Henning/TopK-Insights/actions/workflows/tests.yml/badge.svg)](https://github.com/Der-Henning/TopK-Insights/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/github/Der-Henning/TopK-Insights/branch/main/graph/badge.svg?token=UhCvn9aoVm)](https://codecov.io/github/Der-Henning/TopK-Insights)
 
 # Top-K Insights
 
