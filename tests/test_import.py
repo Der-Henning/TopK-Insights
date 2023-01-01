@@ -1,3 +1,5 @@
+from typing import List
+
 import pandas as pd
 import pytest
 
@@ -13,7 +15,7 @@ from tki.insights import (CorrelationInsight, EvennessInsight,
 
 
 @pytest.fixture
-def example_data() -> list[list]:
+def example_data() -> List[list]:
     return [
         ['H', 2010, 40], ['T', 2010, 38], ['F', 2010, 13], ['B', 2010, 20],
         ['H', 2011, 35], ['T', 2011, 34], ['F', 2011, 10], ['B', 2011, 18],
@@ -23,7 +25,7 @@ def example_data() -> list[list]:
     ]
 
 
-def test_import(example_data: list[list]):
+def test_import(example_data: List[list]):
     extractors = {
         RankExtractor,
         DeltaPrevExtractor,
