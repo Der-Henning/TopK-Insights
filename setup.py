@@ -24,7 +24,7 @@ setup(
     author=about['__author__'],
     author_email=about['__author_email__'],
     url=about['__url__'],
-    packages=['tki'],
+    packages=['tki', 'tki.app', 'tki.insights'],
     include_package_data=True,
     python_requires='>=3.8.*',
     install_requires=['numpy', 'pandas', 'scipy', 'matplotlib', 'dash'],
