@@ -4,10 +4,10 @@ from __future__ import annotations
 import numpy as np
 import plotly.graph_objects as go
 
-from tki.insights import InsightResult
-from tki.insights.compound_insight import CompoundInsight
-from tki.insights.point_insight import OutstandingInsight, PointInsight
-from tki.insights.shape_insight import ShapeInsight, TrendInsight
+from ..insights import InsightResult
+from ..insights.compound_insight import CompoundInsight
+from ..insights.point_insight import OutstandingInsight, PointInsight
+from ..insights.shape_insight import ShapeInsight, TrendInsight
 
 
 class Plot(go.Figure):

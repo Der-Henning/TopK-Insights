@@ -1,7 +1,7 @@
 """Module containing all Aggregator classes"""
 import pandas as pd
 
-from tki.dimensions import Dimension
+from .dimensions import Dimension
 
 
 class AggregationError(Exception):

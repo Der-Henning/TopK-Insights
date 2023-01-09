@@ -5,8 +5,8 @@ from typing import Union
 
 import pandas as pd
 
-from tki.dimensions import Dimension
-from tki.spaces import SiblingGroup, Subspace
+from .dimensions import Dimension
+from .spaces import SiblingGroup, Subspace
 
 
 class MetaExtractor(type):

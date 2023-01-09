@@ -10,13 +10,13 @@ from typing import Generator, List, Set
 import numpy as np
 import pandas as pd
 
-from tki.aggregators import AggregationError, Aggregator
-from tki.composite_extractor import CompositeExtractor, ExtractionResult
-from tki.dimensions import Dimension
-from tki.extractors import Extractor
-from tki.heap import HeapMemory
-from tki.insights import CompoundInsight, Insight, InsightError, InsightResult
-from tki.spaces import SiblingGroup, Subspace
+from .aggregators import AggregationError, Aggregator
+from .composite_extractor import CompositeExtractor, ExtractionResult
+from .dimensions import Dimension
+from .extractors import Extractor
+from .heap import HeapMemory
+from .insights import CompoundInsight, Insight, InsightError, InsightResult
+from .spaces import SiblingGroup, Subspace
 
 log = logging.getLogger('tki')
 log.setLevel(logging.INFO)

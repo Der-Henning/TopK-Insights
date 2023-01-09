@@ -10,8 +10,8 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import norm, rv_continuous, t
 
-from tki.composite_extractor import ExtractionResult
-from tki.insights import Insight, InsightError, InsightResult
+from ..composite_extractor import ExtractionResult
+from ..insights import Insight, InsightError, InsightResult
 
 
 def power_dist(arr: np.ndarray, alpha: float, beta: float) -> np.ndarray:

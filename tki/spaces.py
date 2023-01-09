@@ -6,8 +6,8 @@ from typing import Any, List, Union
 import numpy as np
 import pandas as pd
 
-from tki.aggregators import Aggregator
-from tki.dimensions import Dimension
+from .aggregators import Aggregator
+from .dimensions import Dimension
 
 
 class Subspace():

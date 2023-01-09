@@ -10,8 +10,8 @@ from dash import ALL, Dash, Input, Output, dash_table, dcc, html
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 
-from tki.app.plots import Plot
-from tki.insights import InsightResult
+from ..insights import InsightResult
+from .plots import Plot
 
 
 class Upload(dcc.Upload):

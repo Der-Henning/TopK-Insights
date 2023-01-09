@@ -1,7 +1,7 @@
 """Module containing the Heap Memory class"""
 from typing import List, Union
 
-from tki.insights import InsightResult
+from .insights import InsightResult
 
 
 class HeapMemory():
