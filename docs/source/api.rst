@@ -5,3 +5,5 @@ API
    :toctree: generated
 
    tki
+   tki.TKI
+   tki.APP

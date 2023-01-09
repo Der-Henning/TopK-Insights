@@ -27,4 +27,4 @@ Contents
 License
 =======
 
-.. include:: ../LICENSE
+.. include:: ../../LICENSE
