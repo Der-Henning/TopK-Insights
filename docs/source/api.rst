@@ -6,4 +6,9 @@ API
 
    tki
    tki.TKI
-   tki.APP
+
+   tki.insights
+   tki.insights.Insight
+
+   tki.app
+   tki.app.APP
