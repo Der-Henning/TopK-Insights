@@ -1,13 +1,13 @@
 # Configuration file for the Sphinx documentation builder.
 
+import tki
+
 # -- Project information
 
-project = 'Top-K Insights'
-copyright = '2022, Henning Merklinger'
-author = 'Henning Merklinger'
-
-release = '0.5.1'
-version = '0.5.1'
+project = tki.__description__
+author = tki.__author__
+copyright = tki.__copyright__
+version = tki.__version__
 
 # -- General configuration
 
