@@ -1,3 +1,3 @@
-from .app import App
+from tki.app.app import App
 
 __all__ = ['App']
