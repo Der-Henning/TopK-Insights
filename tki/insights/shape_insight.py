@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import linregress, logistic, rv_continuous
 
-from ..composite_extractor import ExtractionResult
-from .insight import Insight, InsightError, InsightResult
+from tki.composite_extractor import ExtractionResult
+from tki.insights.insight import Insight, InsightError, InsightResult
 
 
 class ShapeInsight(Insight):

@@ -10,8 +10,8 @@ from dash import ALL, Dash, Input, Output, dash_table, dcc, html
 from dash.development.base_component import Component
 from dash.exceptions import PreventUpdate
 
-from ..insights import InsightResult
-from .plots import Plot
+from tki.app.plots import Plot
+from tki.insights import InsightResult
 
 
 class Upload(dcc.Upload):
@@ -177,8 +177,3 @@ class App():
     def run(self) -> NoReturn:
         """Starts webserver"""
         self._app.run(debug=self._debug, port=self._port)
-
-
-if __name__ == "__main__":
-    app = App()
-    app.run()

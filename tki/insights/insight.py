@@ -7,7 +7,7 @@ from typing import Union
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from ..composite_extractor import ExtractionResult
+from tki.composite_extractor import ExtractionResult
 
 
 class InsightError(Exception):
