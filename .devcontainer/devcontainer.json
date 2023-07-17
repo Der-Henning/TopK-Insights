@@ -11,40 +11,23 @@
 			// Use -bullseye variants on local on arm64/Apple Silicon.
 			"VARIANT": "3.10",
 			// Options
-			"NODE_VERSION": "none"
+			// "NODE_VERSION": "lts/*",
+			"POETRY_VERSION": "1.5.1"
 		}
 	},
 
 	// Configure tool-specific properties.
 	"customizations": {
-		// Configure properties specific to VS Code.
 		"vscode": {
-			// Set *default* container specific settings.json values on container create.
 			"settings": {
-				"python.defaultInterpreterPath": "/usr/local/bin/python",
-				"python.linting.enabled": true,
-				"python.linting.pylintEnabled": false,
-				"python.linting.flake8Enabled": true,
-				"python.formatting.provider": "autopep8",
-				"python.testing.pytestEnabled": true,
-				"python.testing.pytestArgs": ["tests"],
-				"isort.check": true,
-				"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
-				"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-				"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
-				"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
-				"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-				"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
-				"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
-				"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-				"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint"
+				"python.defaultInterpreterPath": "./.venv/bin/python",
+				"python.terminal.activateEnvironment": true,
+				"python.terminal.activateEnvInCurrentTerminal": true
 			},
-
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
 				"ms-python.python",
-				"jock.svg",
-				"njpwerner.autodocstring"
+				"GitHub.vscode-pull-request-github"
 			]
 		}
 	},
@@ -53,7 +36,7 @@
 	"forwardPorts": [8050],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "pre-commit install --install-hooks",
+	"postCreateCommand": "poetry install && poetry run pre-commit install --install-hooks",
 
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode"

@@ -1,8 +1,8 @@
 install:
-	pip install -r requirements-dev.txt
+	poetry install
 
 test:
-	python -m pytest --cov tki/
+	poetry run pytest -v --cov tki/
 
 lint:
-	pre-commit run -a
+	poetry run pre-commit run -a

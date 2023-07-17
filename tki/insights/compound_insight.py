@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import pearsonr
 
-from ..composite_extractor import ExtractionResult
-from .insight import Insight, InsightError, InsightResult
+from tki.composite_extractor import ExtractionResult
+from tki.insights.insight import Insight, InsightError, InsightResult
 
 
 class CompoundInsight(Insight):

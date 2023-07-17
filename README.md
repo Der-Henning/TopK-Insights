@@ -13,7 +13,7 @@ The package contains an implementation of the article 'Extracting Top-K Insights
 
 ## Requirements
 
-- Python3.8+
+- Python3.9+
 
 ## Setup
 

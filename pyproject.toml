@@ -1,6 +1,36 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+
+[tool.poetry]
+authors = ["Henning Merklinger <henning.merklinger@gmail.com>"]
+description = "TKI - Top-K Insights"
+license = "MIT"
+name = "tki"
+packages = [{include = "tki"}]
+readme = "README.md"
+repository = "https://github.com/Der-Henning/TopK-Insights"
+version = "0.5.2"
+
+[tool.poetry.dependencies]
+dash = "^2.11.1"
+matplotlib = "^3.7.2"
+numpy = "^1.25.1"
+pandas = "^2.0.3"
+python = ">=3.9,<3.13"
+scipy = "^1.11.1"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.24.0"
+
+[tool.poetry.group.test.dependencies]
+pre-commit = "^3.3.3"
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+
 [tool.pytest.ini_options]
 addopts = [
-    "--import-mode=importlib",
+  "--import-mode=importlib"
 ]
 pythonpath = [
   "."

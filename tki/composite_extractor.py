@@ -4,10 +4,10 @@ from typing import Generator, List, TypedDict, Union
 
 import pandas as pd
 
-from .aggregators import Aggregator
-from .dimensions import Dimension
-from .extractors import Extractor
-from .spaces import SiblingGroup, Subspace
+from tki.aggregators import Aggregator
+from tki.dimensions import Dimension
+from tki.extractors import Extractor
+from tki.spaces import SiblingGroup, Subspace
 
 
 class CompositeExtractor():
