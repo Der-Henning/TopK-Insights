@@ -21,7 +21,7 @@ python = ">=3.9,<3.13"
 scipy = "^1.11.1"
 
 [tool.poetry.group.dev.dependencies]
-ipykernel = "^6.24.0"
+ipykernel = "^6.25.0"
 
 [tool.poetry.group.test.dependencies]
 pre-commit = "^3.3.3"
