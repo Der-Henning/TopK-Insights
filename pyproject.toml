@@ -24,7 +24,7 @@ scipy = "^1.11.1"
 ipykernel = "^6.24.0"
 
 [tool.poetry.group.test.dependencies]
-pre-commit = "^3.3.3"
+pre-commit = "^3.4.0"
 pytest = "^7.4.0"
 pytest-cov = "^4.1.0"
 
