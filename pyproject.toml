@@ -13,7 +13,7 @@ repository = "https://github.com/Der-Henning/TopK-Insights"
 version = "0.5.2"
 
 [tool.poetry.dependencies]
-dash = "^2.11.1"
+dash = "^2.14.0"
 matplotlib = "^3.7.2"
 numpy = "^1.25.1"
 pandas = "^2.0.3"
